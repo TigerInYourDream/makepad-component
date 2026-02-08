@@ -50,7 +50,7 @@ impl A2uiSurface {
                 self.render_chart(cx, scope, chart, data_model, component_id);
             }
             ComponentType::Calendar(calendar) => {
-                self.render_calendar(cx, calendar, data_model);
+                self.render_calendar(cx, scope, calendar, data_model);
             }
             ComponentType::AudioPlayer(audio_player) => {
                 self.render_audio_player(cx, audio_player, data_model, component_id);

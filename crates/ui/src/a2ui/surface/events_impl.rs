@@ -120,50 +120,31 @@ impl Widget for A2uiSurface {
             }
         }
 
-        // Handle calendar cell events (manual Area hit testing)
-        for (idx, area) in self.calendar_cell_areas.iter().enumerate() {
-            match event.hits(cx, *area) {
-                Hit::FingerHoverIn(_) => {
-                    if self.calendar_hovered_idx != Some(idx) {
-                        self.calendar_hovered_idx = Some(idx);
-                        cx.set_cursor(MouseCursor::Hand);
-                        needs_redraw = true;
-                    }
-                }
-                Hit::FingerHoverOut(_) => {
-                    if self.calendar_hovered_idx == Some(idx) {
-                        self.calendar_hovered_idx = None;
-                        cx.set_cursor(MouseCursor::Default);
-                        needs_redraw = true;
-                    }
-                }
-                Hit::FingerDown(_) => {
-                    if let Some(&(row, col)) = self.calendar_cell_meta.get(idx) {
-                        self.calendar_selected_cell = Some((row, col));
-
-                        // Emit userAction with row/col context
-                        let user_action = crate::a2ui::message::UserAction {
-                            surface_id: surface_id.clone(),
-                            action: crate::a2ui::message::UserActionPayload {
-                                name: "calendarCellClick".to_string(),
-                                context: {
-                                    let mut ctx = std::collections::HashMap::new();
-                                    ctx.insert("row".to_string(), serde_json::json!(row));
-                                    ctx.insert("col".to_string(), serde_json::json!(col));
-                                    ctx
-                                },
-                            },
-                            component_id: Some("calendar-view".to_string()),
-                        };
-                        cx.widget_action(
-                            self.widget_uid(),
-                            &scope.path,
-                            A2uiSurfaceAction::UserAction(user_action),
-                        );
-                        needs_redraw = true;
-                    }
-                }
-                _ => {}
+        // Handle calendar events via MpCalendar widget
+        if let Some(cal) = self.mp_calendar.as_mut() {
+            let cal_actions = cx.capture_actions(|cx| {
+                cal.handle_event(cx, event, scope);
+            });
+            if let Some((row, col)) = cal.cell_clicked(&cal_actions) {
+                let user_action = crate::a2ui::message::UserAction {
+                    surface_id: surface_id.clone(),
+                    action: crate::a2ui::message::UserActionPayload {
+                        name: "calendarCellClick".to_string(),
+                        context: {
+                            let mut ctx = std::collections::HashMap::new();
+                            ctx.insert("row".to_string(), serde_json::json!(row));
+                            ctx.insert("col".to_string(), serde_json::json!(col));
+                            ctx
+                        },
+                    },
+                    component_id: Some("calendar-view".to_string()),
+                };
+                cx.widget_action(
+                    self.widget_uid(),
+                    &scope.path,
+                    A2uiSurfaceAction::UserAction(user_action),
+                );
+                needs_redraw = true;
             }
         }
 
@@ -218,8 +199,6 @@ impl Widget for A2uiSurface {
         self.slider_meta.clear();
         self.text_input_meta.clear();
         self.audio_player_data.clear();
-        self.calendar_cell_areas.clear();
-        self.calendar_cell_meta.clear();
         self.label_count = 0;
         self.inside_card = false;
 

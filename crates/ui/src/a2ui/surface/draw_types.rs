@@ -98,25 +98,6 @@ live_design! {
         }
     }
 
-    pub DrawA2uiCalendarCell = {{DrawA2uiCalendarCell}} {
-        instance border_color: #5588bb66
-        instance border_width: 0.5
-
-        fn pixel(self) -> vec4 {
-            let sdf = Sdf2d::viewport(self.pos * self.rect_size);
-            sdf.box(
-                self.border_width,
-                self.border_width,
-                self.rect_size.x - self.border_width * 2.0,
-                self.rect_size.y - self.border_width * 2.0,
-                2.0
-            );
-            sdf.fill_keep(self.color);
-            sdf.stroke(self.border_color, self.border_width);
-            return sdf.result;
-        }
-    }
-
     pub DrawAudioBars = {{DrawAudioBars}} {
         fn pixel(self) -> vec4 {
             let sdf = Sdf2d::viewport(self.pos * self.rect_size);
@@ -347,17 +328,6 @@ pub struct DrawA2uiQuad {
     pub p3x: f32,
     #[live(1.0)]
     pub p3y: f32,
-}
-
-// ============================================================================
-// DrawA2uiCalendarCell - for rendering calendar grid cells with colored backgrounds
-// ============================================================================
-
-#[derive(Live, LiveHook, LiveRegister)]
-#[repr(C)]
-pub struct DrawA2uiCalendarCell {
-    #[deref]
-    draw_super: DrawColor,
 }
 
 #[derive(Live, LiveHook, LiveRegister)]

@@ -14,6 +14,7 @@ use crate::a2ui::{
 };
 use crate::widgets::{
     button::MpButton,
+    calendar::MpCalendar,
     checkbox::{MpCheckbox, MpCheckboxAction},
     slider::{MpSlider, MpSliderAction},
     label::MpLabel,
@@ -61,8 +62,9 @@ live_design! {
     use crate::a2ui::surface::draw_types::DrawA2uiChartLine;
     use crate::a2ui::surface::draw_types::DrawA2uiArc;
     use crate::a2ui::surface::draw_types::DrawA2uiQuad;
-    use crate::a2ui::surface::draw_types::DrawA2uiCalendarCell;
     use crate::a2ui::surface::draw_types::DrawAudioBars;
+
+    use crate::widgets::calendar::MpCalendar;
 
     // Widget templates for pool cloning
     use crate::widgets::button::MpButton;
@@ -151,16 +153,8 @@ live_design! {
             }
         }
 
-        // Calendar grid draw instances
-        draw_calendar_cell: <DrawA2uiCalendarCell> {}
-        draw_calendar_text: {
-            text_style: <THEME_FONT_REGULAR> { font_size: 11.0, line_spacing: 1.3 }
-            color: #FFFFFF
-        }
-        draw_calendar_header_text: {
-            text_style: <THEME_FONT_BOLD> { font_size: 13.0, line_spacing: 1.3 }
-            color: #FFFFFF
-        }
+        // Calendar widget template
+        tpl_calendar: <MpCalendar> {}
 
         plot_line: <LinePlot> {}
         plot_bar: <BarPlot> {}
@@ -384,19 +378,6 @@ pub struct A2uiSurface {
     #[live]
     draw_divider: DrawColor,
 
-    /// Draw calendar cell background
-    #[redraw]
-    #[live]
-    draw_calendar_cell: DrawA2uiCalendarCell,
-
-    /// Draw calendar text (regular)
-    #[live]
-    draw_calendar_text: DrawText,
-
-    /// Draw calendar header text (bold)
-    #[live]
-    draw_calendar_header_text: DrawText,
-
     // makepad-plot chart widget instances
     #[live] plot_line: LinePlot,
     #[live] plot_bar: BarPlot,
@@ -441,6 +422,7 @@ pub struct A2uiSurface {
     #[live] tpl_slider: Option<LivePtr>,
     #[live] tpl_label: Option<LivePtr>,
     #[live] tpl_text_input: Option<LivePtr>,
+    #[live] tpl_calendar: Option<LivePtr>,
 
     // ============================================================================
     // Widget pools
@@ -541,24 +523,11 @@ pub struct A2uiSurface {
     // ============================================================================
 
     // ============================================================================
-    // Calendar state tracking
+    // Calendar widget (lazy-initialized)
     // ============================================================================
 
-    /// Calendar cell areas for hit testing
     #[rust]
-    calendar_cell_areas: Vec<Area>,
-
-    /// Calendar cell metadata: (row_idx, col_idx)
-    #[rust]
-    calendar_cell_meta: Vec<(usize, usize)>,
-
-    /// Currently selected calendar cell (row, col)
-    #[rust]
-    calendar_selected_cell: Option<(usize, usize)>,
-
-    /// Currently hovered calendar cell index
-    #[rust]
-    calendar_hovered_idx: Option<usize>,
+    mp_calendar: Option<MpCalendar>,
 
     /// AudioPlayer button areas for event detection (play buttons)
     #[rust]
@@ -771,6 +740,14 @@ impl A2uiSurface {
     fn get_surface_id(&self) -> String {
         // For now, use "main" as default
         "main".to_string()
+    }
+
+    /// Get or lazily create the MpCalendar instance
+    fn ensure_calendar(&mut self, cx: &mut Cx) -> &mut MpCalendar {
+        if self.mp_calendar.is_none() {
+            self.mp_calendar = Some(MpCalendar::new_from_ptr(cx, self.tpl_calendar));
+        }
+        self.mp_calendar.as_mut().unwrap()
     }
 
     /// Get or grow a button from the pool
