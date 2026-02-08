@@ -1,0 +1,274 @@
+[
+  {
+    "beginRendering": {
+      "surfaceId": "main",
+      "root": "root-column"
+    }
+  },
+  {
+    "surfaceUpdate": {
+      "surfaceId": "main",
+      "components": [
+        {
+          "id": "root-column",
+          "component": {
+            "Column": {
+              "children": { "explicitList": ["calendar-view"] }
+            }
+          }
+        },
+        {
+          "id": "calendar-view",
+          "component": {
+            "Calendar": {
+              "title": { "literalString": "\ud83d\uddfc Tokyo 7-Day Travel Planner" },
+              "columns": 7,
+              "columnHeaders": ["Mon 2/10", "Tue 2/11", "Wed 2/12", "Thu 2/13", "Fri 2/14", "Sat 2/15", "Sun 2/16"],
+              "columnSubtitles": ["Shibuya", "Asakusa", "Shinjuku", "Tsukiji", "Mt. Fuji", "Odaiba", "Ueno"],
+              "rowLabels": ["", "\ud83c\udf05 AM", "\u2600\ufe0f PM", "\ud83c\udf19 Eve", "\ud83d\udcb0"],
+              "rowColorHints": ["header", "morning", "afternoon", "evening", "budget"],
+              "cells": { "path": "/calendar/cells" },
+              "footer": { "path": "/calendar/grandTotal" }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "dataModelUpdate": {
+      "surfaceId": "main",
+      "path": "/",
+      "contents": [
+        {
+          "key": "calendar",
+          "valueMap": [
+            {
+              "key": "grandTotal",
+              "valueString": "\ud83d\udcb5 GRAND TOTAL: \u00a5100,500 (~$670)"
+            },
+            {
+              "key": "cells",
+              "valueMap": [
+                {
+                  "key": "0",
+                  "valueMap": [
+                    { "key": "0", "valueMap": [{ "key": "line1", "valueString": "" }, { "key": "line2", "valueString": "" }] },
+                    { "key": "1", "valueMap": [{ "key": "line1", "valueString": "" }, { "key": "line2", "valueString": "" }] },
+                    { "key": "2", "valueMap": [{ "key": "line1", "valueString": "" }, { "key": "line2", "valueString": "" }] },
+                    { "key": "3", "valueMap": [{ "key": "line1", "valueString": "" }, { "key": "line2", "valueString": "" }] },
+                    { "key": "4", "valueMap": [{ "key": "line1", "valueString": "" }, { "key": "line2", "valueString": "" }] },
+                    { "key": "5", "valueMap": [{ "key": "line1", "valueString": "" }, { "key": "line2", "valueString": "" }] },
+                    { "key": "6", "valueMap": [{ "key": "line1", "valueString": "" }, { "key": "line2", "valueString": "" }] }
+                  ]
+                },
+                {
+                  "key": "1",
+                  "valueMap": [
+                    { "key": "0", "valueMap": [
+                      { "key": "line1", "valueString": "Shibuya" },
+                      { "key": "line2", "valueString": "Crossing" },
+                      { "key": "time", "valueString": "9:00 - 12:00" },
+                      { "key": "description", "valueString": "Walk the world's busiest intersection. Visit Hachiko statue, explore Center-gai shopping street and Shibuya 109" },
+                      { "key": "tips", "valueString": "Best viewed from Starbucks 2F at the crossing. Arrive early to beat crowds" }
+                    ]},
+                    { "key": "1", "valueMap": [
+                      { "key": "line1", "valueString": "Senso-ji" },
+                      { "key": "line2", "valueString": "Temple" },
+                      { "key": "time", "valueString": "8:30 - 11:30" },
+                      { "key": "description", "valueString": "Tokyo's oldest temple (645 AD). Walk through Kaminarimon gate and Nakamise-dori shopping street" },
+                      { "key": "tips", "valueString": "Go early morning for fewer crowds. Try fresh ningyo-yaki on Nakamise street" }
+                    ]},
+                    { "key": "2", "valueMap": [
+                      { "key": "line1", "valueString": "Shinjuku" },
+                      { "key": "line2", "valueString": "Gyoen" },
+                      { "key": "time", "valueString": "9:00 - 12:00" },
+                      { "key": "description", "valueString": "One of Tokyo's largest parks with Japanese, English and French gardens. Over 1,000 cherry trees" },
+                      { "key": "tips", "valueString": "Entry \u00a5500. No alcohol allowed. Bring a bento for picnic lunch" }
+                    ]},
+                    { "key": "3", "valueMap": [
+                      { "key": "line1", "valueString": "Tsukiji" },
+                      { "key": "line2", "valueString": "Market" },
+                      { "key": "time", "valueString": "7:00 - 11:00" },
+                      { "key": "description", "valueString": "Famous outer market with 400+ shops. Fresh sushi, tamagoyaki, and street food paradise" },
+                      { "key": "tips", "valueString": "Arrive before 9AM for best selection. Try the tuna sashimi and dashimaki tamago" }
+                    ]},
+                    { "key": "4", "valueMap": [
+                      { "key": "line1", "valueString": "Lake" },
+                      { "key": "line2", "valueString": "Kawaguchi" },
+                      { "key": "time", "valueString": "8:00 - 12:00" },
+                      { "key": "description", "valueString": "Best Mt. Fuji viewing spot. Rent a bike to cycle around the lake or take the Kachi Kachi ropeway" },
+                      { "key": "tips", "valueString": "Take JR Chuo Line + Fujikyuko Line (~2.5hrs). Use JR Pass. Check weather forecast for Fuji visibility" }
+                    ]},
+                    { "key": "5", "valueMap": [
+                      { "key": "line1", "valueString": "teamLab" },
+                      { "key": "line2", "valueString": "Planets" },
+                      { "key": "time", "valueString": "10:00 - 13:00" },
+                      { "key": "description", "valueString": "Immersive digital art museum. Walk barefoot through water and interactive light installations" },
+                      { "key": "tips", "valueString": "Book tickets online in advance! Wear pants you can roll up (water exhibits). No photography in some zones" }
+                    ]},
+                    { "key": "6", "valueMap": [
+                      { "key": "line1", "valueString": "Ueno" },
+                      { "key": "line2", "valueString": "Park" },
+                      { "key": "time", "valueString": "9:00 - 12:00" },
+                      { "key": "description", "valueString": "Large public park with Tokyo National Museum, zoo, and Shinobazu Pond. Great for a relaxing final morning" },
+                      { "key": "tips", "valueString": "Visit Tokyo National Museum (\u00a51,000) for Japanese art history. Feed the ducks at Shinobazu Pond" }
+                    ]}
+                  ]
+                },
+                {
+                  "key": "2",
+                  "valueMap": [
+                    { "key": "0", "valueMap": [
+                      { "key": "line1", "valueString": "Harajuku" },
+                      { "key": "line2", "valueString": "Meiji Shrine" },
+                      { "key": "time", "valueString": "13:00 - 17:00" },
+                      { "key": "description", "valueString": "Serene Shinto shrine in a forest, then explore Takeshita Street for quirky fashion and crepes" },
+                      { "key": "tips", "valueString": "Shrine is free. Takeshita St is packed on weekends. Try the rainbow cotton candy" }
+                    ]},
+                    { "key": "1", "valueMap": [
+                      { "key": "line1", "valueString": "Akihabara" },
+                      { "key": "line2", "valueString": "Electric Town" },
+                      { "key": "time", "valueString": "13:00 - 17:30" },
+                      { "key": "description", "valueString": "Otaku paradise! Electronics, anime, manga, maid cafes, and retro game shops galore" },
+                      { "key": "tips", "valueString": "Visit Super Potato for retro games. Don Quijote for tax-free souvenirs. Maid cafe ~\u00a53,000/person" }
+                    ]},
+                    { "key": "2", "valueMap": [
+                      { "key": "line1", "valueString": "TMG Bldg" },
+                      { "key": "line2", "valueString": "Free view!" },
+                      { "key": "time", "valueString": "13:00 - 16:00" },
+                      { "key": "description", "valueString": "Tokyo Metropolitan Government Building - free observatory at 202m with panoramic city views and Mt. Fuji on clear days" },
+                      { "key": "tips", "valueString": "FREE entry! North tower has better views. Open until 23:00 - great for sunset too" }
+                    ]},
+                    { "key": "3", "valueMap": [
+                      { "key": "line1", "valueString": "Ginza" },
+                      { "key": "line2", "valueString": "Shopping" },
+                      { "key": "time", "valueString": "13:00 - 17:00" },
+                      { "key": "description", "valueString": "Tokyo's upscale shopping district. Visit Ginza Six, Mitsukoshi dept store, and browse luxury boutiques" },
+                      { "key": "tips", "valueString": "Window shopping is free! Visit the Uniqlo flagship 12-floor store. Tax-free shopping with passport" }
+                    ]},
+                    { "key": "4", "valueMap": [
+                      { "key": "line1", "valueString": "Mt. Fuji" },
+                      { "key": "line2", "valueString": "5th Station" },
+                      { "key": "time", "valueString": "13:00 - 16:00" },
+                      { "key": "description", "valueString": "Drive up to 2,300m elevation. Short nature walks, souvenir shops, and breathtaking views above the clouds" },
+                      { "key": "tips", "valueString": "Temperature drops ~12C from base. Bring warm layers even in summer. Altitude may cause mild headaches" }
+                    ]},
+                    { "key": "5", "valueMap": [
+                      { "key": "line1", "valueString": "Odaiba" },
+                      { "key": "line2", "valueString": "Seaside Park" },
+                      { "key": "time", "valueString": "14:00 - 17:30" },
+                      { "key": "description", "valueString": "Waterfront area with beach, Statue of Liberty replica, Gundam statue, and DiverCity shopping mall" },
+                      { "key": "tips", "valueString": "Take the Yurikamome line for scenic elevated train ride. Visit the life-size Unicorn Gundam at dusk for light show" }
+                    ]},
+                    { "key": "6", "valueMap": [
+                      { "key": "line1", "valueString": "Ameyoko" },
+                      { "key": "line2", "valueString": "Market" },
+                      { "key": "time", "valueString": "12:00 - 15:00" },
+                      { "key": "description", "valueString": "Bustling outdoor market under the train tracks. Bargain shopping, street food, and local atmosphere" },
+                      { "key": "tips", "valueString": "Great for souvenirs at bargain prices. Try the \u00a5500 fresh fruit cups and chocolate-covered strawberries" }
+                    ]}
+                  ]
+                },
+                {
+                  "key": "3",
+                  "valueMap": [
+                    { "key": "0", "valueMap": [
+                      { "key": "line1", "valueString": "Shibuya" },
+                      { "key": "line2", "valueString": "Sky View" },
+                      { "key": "time", "valueString": "18:00 - 21:00" },
+                      { "key": "description", "valueString": "Shibuya Sky rooftop observatory at 230m. Stunning sunset and night views of the glittering Tokyo skyline" },
+                      { "key": "tips", "valueString": "Book tickets online (\u00a52,000). Best at sunset (check time). Rooftop is open-air - dress for wind" }
+                    ]},
+                    { "key": "1", "valueMap": [
+                      { "key": "line1", "valueString": "Arcade" },
+                      { "key": "line2", "valueString": "Gaming" },
+                      { "key": "time", "valueString": "18:00 - 22:00" },
+                      { "key": "description", "valueString": "Japanese arcade culture! Try UFO catchers, rhythm games, purikura photo booths, and retro cabinets" },
+                      { "key": "tips", "valueString": "Visit GiGO or SEGA arcades. Budget \u00a52,000-3,000 for games. UFO catchers take \u00a5100 coins" }
+                    ]},
+                    { "key": "2", "valueMap": [
+                      { "key": "line1", "valueString": "Omoide" },
+                      { "key": "line2", "valueString": "Yokocho" },
+                      { "key": "time", "valueString": "18:00 - 22:00" },
+                      { "key": "description", "valueString": "Atmospheric alley of tiny yakitori bars near Shinjuku Station. Smoky lantern-lit nostalgia since the 1940s" },
+                      { "key": "tips", "valueString": "Most shops seat 6-10 people. Point-and-order is OK. Try yakitori, motsu-nikomi (stew), and draft beer" }
+                    ]},
+                    { "key": "3", "valueMap": [
+                      { "key": "line1", "valueString": "Ginza" },
+                      { "key": "line2", "valueString": "Dinner" },
+                      { "key": "time", "valueString": "18:30 - 21:00" },
+                      { "key": "description", "valueString": "Fine dining in Ginza. Experience omakase sushi, wagyu teppanyaki, or kaiseki multi-course Japanese cuisine" },
+                      { "key": "tips", "valueString": "Reserve in advance via Tabelog or hotel concierge. Budget \u00a510,000-20,000 for high-end omakase" }
+                    ]},
+                    { "key": "4", "valueMap": [
+                      { "key": "line1", "valueString": "Onsen" },
+                      { "key": "line2", "valueString": "Hot Spring" },
+                      { "key": "time", "valueString": "17:00 - 20:00" },
+                      { "key": "description", "valueString": "Relax in natural hot springs after a day of hiking. Traditional Japanese bathing with indoor and outdoor pools" },
+                      { "key": "tips", "valueString": "Wash thoroughly before entering. Tattoos may be restricted - check in advance. Bring your own towel or rent one" }
+                    ]},
+                    { "key": "5", "valueMap": [
+                      { "key": "line1", "valueString": "Rainbow" },
+                      { "key": "line2", "valueString": "Bridge" },
+                      { "key": "time", "valueString": "18:00 - 20:30" },
+                      { "key": "description", "valueString": "Walk across the illuminated Rainbow Bridge for spectacular Tokyo Bay night views. Free pedestrian walkway" },
+                      { "key": "tips", "valueString": "South side has better bay views, north side for city skyline. Walking takes ~30 min. Closes at 21:00" }
+                    ]},
+                    { "key": "6", "valueMap": [
+                      { "key": "line1", "valueString": "\u2708\ufe0f Depart" },
+                      { "key": "line2", "valueString": "Narita" },
+                      { "key": "time", "valueString": "16:00 - 20:00" },
+                      { "key": "description", "valueString": "Head to Narita International Airport. Last-minute souvenir shopping at airport duty-free shops" },
+                      { "key": "tips", "valueString": "Take Narita Express (~60min, \u00a53,250 with JR Pass). Arrive 3hrs early for international flights. Buy Tokyo Banana!" }
+                    ]}
+                  ]
+                },
+                {
+                  "key": "4",
+                  "valueMap": [
+                    { "key": "0", "valueMap": [
+                      { "key": "line1", "valueString": "$80" },
+                      { "key": "line2", "valueString": "" },
+                      { "key": "description", "valueString": "Transport \u00a51,200 | Food \u00a54,000 | Attractions \u00a52,000 | Shopping \u00a54,800" }
+                    ]},
+                    { "key": "1", "valueMap": [
+                      { "key": "line1", "valueString": "$60" },
+                      { "key": "line2", "valueString": "" },
+                      { "key": "description", "valueString": "Transport \u00a5800 | Food \u00a53,500 | Temple offering \u00a5500 | Souvenirs \u00a54,200" }
+                    ]},
+                    { "key": "2", "valueMap": [
+                      { "key": "line1", "valueString": "$100" },
+                      { "key": "line2", "valueString": "" },
+                      { "key": "description", "valueString": "Transport \u00a5600 | Food \u00a55,000 | Gyoen entry \u00a5500 | Dinner \u00a58,900" }
+                    ]},
+                    { "key": "3", "valueMap": [
+                      { "key": "line1", "valueString": "$150" },
+                      { "key": "line2", "valueString": "" },
+                      { "key": "description", "valueString": "Transport \u00a5800 | Sushi breakfast \u00a53,000 | Shopping \u00a56,000 | Omakase dinner \u00a512,700" }
+                    ]},
+                    { "key": "4", "valueMap": [
+                      { "key": "line1", "valueString": "$120" },
+                      { "key": "line2", "valueString": "" },
+                      { "key": "description", "valueString": "Transport \u00a55,000 (long distance) | Food \u00a54,000 | 5th Station \u00a51,000 | Onsen \u00a52,000 | Souvenirs \u00a56,000" }
+                    ]},
+                    { "key": "5", "valueMap": [
+                      { "key": "line1", "valueString": "$90" },
+                      { "key": "line2", "valueString": "" },
+                      { "key": "description", "valueString": "Transport \u00a51,500 | teamLab \u00a53,200 | Food \u00a54,000 | Gundam shop \u00a54,800" }
+                    ]},
+                    { "key": "6", "valueMap": [
+                      { "key": "line1", "valueString": "$70" },
+                      { "key": "line2", "valueString": "" },
+                      { "key": "description", "valueString": "Transport \u00a51,000 | Museum \u00a51,000 | Food \u00a53,000 | Ameyoko souvenirs \u00a53,000 | Tokyo Banana \u00a52,500" }
+                    ]}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

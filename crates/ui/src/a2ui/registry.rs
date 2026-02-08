@@ -32,6 +32,7 @@ pub enum A2uiComponentType {
 
     // Visualization
     Chart,
+    Calendar,
     // Media
     AudioPlayer,
 }
@@ -56,6 +57,7 @@ impl A2uiComponentType {
             A2uiComponentType::Modal => "Modal",
             A2uiComponentType::Tabs => "Tabs",
             A2uiComponentType::Chart => "Chart",
+            A2uiComponentType::Calendar => "Calendar",
             A2uiComponentType::AudioPlayer => "AudioPlayer",
         }
     }
@@ -79,6 +81,7 @@ impl A2uiComponentType {
             "Modal" => Some(A2uiComponentType::Modal),
             "Tabs" => Some(A2uiComponentType::Tabs),
             "Chart" => Some(A2uiComponentType::Chart),
+            "Calendar" => Some(A2uiComponentType::Calendar),
             "AudioPlayer" => Some(A2uiComponentType::AudioPlayer),
             _ => None,
         }
@@ -103,6 +106,7 @@ impl A2uiComponentType {
             A2uiComponentType::Modal,
             A2uiComponentType::Tabs,
             A2uiComponentType::Chart,
+            A2uiComponentType::Calendar,
             A2uiComponentType::AudioPlayer,
         ]
     }
@@ -279,6 +283,13 @@ impl ComponentRegistry {
             implemented: true,
         });
 
+        registry.register(ComponentMapping {
+            a2ui_type: A2uiComponentType::Calendar,
+            makepad_widget: "A2uiCalendar",
+            description: "Calendar/grid visualization for schedules and planners",
+            implemented: true,
+        });
+
         // Media components
         registry.register(ComponentMapping {
             a2ui_type: A2uiComponentType::AudioPlayer,
@@ -359,6 +370,7 @@ pub fn component_type_of(component: &super::message::ComponentType) -> A2uiCompo
         ComponentType::Modal(_) => A2uiComponentType::Modal,
         ComponentType::Tabs(_) => A2uiComponentType::Tabs,
         ComponentType::Chart(_) => A2uiComponentType::Chart,
+        ComponentType::Calendar(_) => A2uiComponentType::Calendar,
         ComponentType::AudioPlayer(_) => A2uiComponentType::AudioPlayer,
     }
 }

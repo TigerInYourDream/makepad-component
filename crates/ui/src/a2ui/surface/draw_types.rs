@@ -17,97 +17,6 @@ live_design! {
         }
     }
 
-    pub DrawA2uiTextField = {{DrawA2uiTextField}} {
-        instance border_color: #5588bb
-        instance bg_color: #2a3a5a
-        instance border_radius: 6.0
-        instance border_width: 1.0
-
-        fn pixel(self) -> vec4 {
-            let sdf = Sdf2d::viewport(self.pos * self.rect_size);
-            sdf.box(
-                self.border_width,
-                self.border_width,
-                self.rect_size.x - self.border_width * 2.0,
-                self.rect_size.y - self.border_width * 2.0,
-                self.border_radius
-            );
-            sdf.fill_keep(self.bg_color);
-            let border = mix(self.border_color, vec4(0.231, 0.51, 0.965, 1.0), self.focus);
-            sdf.stroke(border, self.border_width);
-            return sdf.result;
-        }
-    }
-
-    pub DrawA2uiCheckBox = {{DrawA2uiCheckBox}} {
-        instance border_color: #5588bb
-        instance bg_color: #2a3a5a
-        instance check_color: #3B82F6
-        instance border_radius: 4.0
-        instance border_width: 1.5
-
-        fn pixel(self) -> vec4 {
-            let sdf = Sdf2d::viewport(self.pos * self.rect_size);
-            let size = min(self.rect_size.x, self.rect_size.y);
-            sdf.box(
-                self.border_width,
-                self.border_width,
-                size - self.border_width * 2.0,
-                size - self.border_width * 2.0,
-                self.border_radius
-            );
-            let bg = mix(self.bg_color, self.check_color, self.checked);
-            sdf.fill_keep(bg);
-            let border = mix(self.border_color, self.check_color, self.hover);
-            sdf.stroke(border, self.border_width);
-            if self.checked > 0.5 {
-                let cx = size * 0.5;
-                let cy = size * 0.5;
-                let scale = size * 0.25;
-                sdf.move_to(cx - scale * 0.8, cy);
-                sdf.line_to(cx - scale * 0.2, cy + scale * 0.6);
-                sdf.line_to(cx + scale * 0.8, cy - scale * 0.5);
-                sdf.stroke(#FFFFFF, 2.0);
-            }
-            return sdf.result;
-        }
-    }
-
-    pub DrawA2uiSliderTrack = {{DrawA2uiSliderTrack}} {
-        instance track_color: #3a4a6a
-        instance fill_color: #3B82F6
-        instance border_radius: 3.0
-
-        fn pixel(self) -> vec4 {
-            let sdf = Sdf2d::viewport(self.pos * self.rect_size);
-            sdf.box(0.0, 0.0, self.rect_size.x, self.rect_size.y, self.border_radius);
-            sdf.fill(self.track_color);
-            let fill_width = self.rect_size.x * self.progress;
-            if fill_width > 0.0 {
-                sdf.box(0.0, 0.0, fill_width, self.rect_size.y, self.border_radius);
-                sdf.fill(self.fill_color);
-            }
-            return sdf.result;
-        }
-    }
-
-    pub DrawA2uiSliderThumb = {{DrawA2uiSliderThumb}} {
-        instance thumb_color: #FFFFFF
-        instance shadow_color: #00000040
-
-        fn pixel(self) -> vec4 {
-            let sdf = Sdf2d::viewport(self.pos * self.rect_size);
-            let radius = min(self.rect_size.x, self.rect_size.y) * 0.5;
-            let center = self.rect_size * 0.5;
-            sdf.circle(center.x, center.y + 1.0, radius - 1.0);
-            sdf.fill(self.shadow_color);
-            let thumb_scale = 1.0 + self.hover * 0.1 - self.pressed * 0.05;
-            sdf.circle(center.x, center.y, (radius - 2.0) * thumb_scale);
-            sdf.fill(self.thumb_color);
-            return sdf.result;
-        }
-    }
-
     pub DrawA2uiChartLine = {{DrawA2uiChartLine}} {
         fn pixel(self) -> vec4 {
             let uv = self.pos;
@@ -186,6 +95,25 @@ live_design! {
             let aa = smoothstep(0.0, 1.5, min_dist);
             let alpha = aa * self.opacity;
             return vec4(self.color.rgb * self.color.a * alpha, self.color.a * alpha);
+        }
+    }
+
+    pub DrawA2uiCalendarCell = {{DrawA2uiCalendarCell}} {
+        instance border_color: #5588bb66
+        instance border_width: 0.5
+
+        fn pixel(self) -> vec4 {
+            let sdf = Sdf2d::viewport(self.pos * self.rect_size);
+            sdf.box(
+                self.border_width,
+                self.border_width,
+                self.rect_size.x - self.border_width * 2.0,
+                self.rect_size.y - self.border_width * 2.0,
+                2.0
+            );
+            sdf.fill_keep(self.color);
+            sdf.stroke(self.border_color, self.border_width);
+            return sdf.result;
         }
     }
 
@@ -347,64 +275,6 @@ pub struct DrawA2uiImage {
 }
 
 // ============================================================================
-// DrawA2uiTextField - for rendering text field backgrounds
-// ============================================================================
-
-#[derive(Live, LiveHook, LiveRegister)]
-#[repr(C)]
-pub struct DrawA2uiTextField {
-    #[deref]
-    draw_super: DrawQuad,
-    #[live(0.0)]
-    pub focus: f32,
-}
-
-// ============================================================================
-// DrawA2uiCheckBox - for rendering checkbox with checkmark
-// ============================================================================
-
-#[derive(Live, LiveHook, LiveRegister)]
-#[repr(C)]
-pub struct DrawA2uiCheckBox {
-    #[deref]
-    draw_super: DrawQuad,
-    #[live(0.0)]
-    pub checked: f32,
-    #[live(0.0)]
-    pub hover: f32,
-}
-
-// ============================================================================
-// DrawA2uiSliderTrack - for rendering slider track
-// ============================================================================
-
-#[derive(Live, LiveHook, LiveRegister)]
-#[repr(C)]
-pub struct DrawA2uiSliderTrack {
-    #[deref]
-    draw_super: DrawQuad,
-    #[live(0.0)]
-    pub progress: f32,
-}
-
-// ============================================================================
-// DrawA2uiSliderThumb - for rendering slider thumb
-// ============================================================================
-
-#[derive(Live, LiveHook, LiveRegister)]
-#[repr(C)]
-pub struct DrawA2uiSliderThumb {
-    #[deref]
-    draw_super: DrawQuad,
-    #[live(0.0)]
-    pub hover: f32,
-    #[live(0.0)]
-    pub pressed: f32,
-}
-
-// ============================================================================
-// DrawA2uiBar - for rendering bar chart bars
-// ============================================================================
 // DrawA2uiChartLine - for rendering line chart segments (chord chart)
 // ============================================================================
 
@@ -477,6 +347,17 @@ pub struct DrawA2uiQuad {
     pub p3x: f32,
     #[live(1.0)]
     pub p3y: f32,
+}
+
+// ============================================================================
+// DrawA2uiCalendarCell - for rendering calendar grid cells with colored backgrounds
+// ============================================================================
+
+#[derive(Live, LiveHook, LiveRegister)]
+#[repr(C)]
+pub struct DrawA2uiCalendarCell {
+    #[deref]
+    draw_super: DrawColor,
 }
 
 #[derive(Live, LiveHook, LiveRegister)]

@@ -9,7 +9,6 @@ mod helpers;
 
 pub use draw_types::*;
 pub use widget::*;
-pub use helpers::*;
 
 use makepad_widgets::*;
 

@@ -116,6 +116,17 @@ live_design! {
                             }
                         }
 
+                        // Calendar view button
+                        calendar_btn = <MpButton> {
+                            text: "📅 Calendar"
+                            draw_text: { color: #FFFFFF }
+                            draw_bg: {
+                                color: #6633AA
+                                color_hover: #552299
+                                color_pressed: #441188
+                            }
+                        }
+
                         // Connect to server button
                         connect_btn = <MpButton> {
                             text: "🎨 Live Editor"
@@ -368,6 +379,14 @@ impl App {
             }
         }
 
+        // Handle "Calendar" button click (MpButton)
+        let calendar_btn_ref = self.ui.widget(ids!(calendar_btn));
+        if let Some(item) = actions.find_widget_action(calendar_btn_ref.widget_uid()) {
+            if matches!(item.cast::<MpButtonAction>(), MpButtonAction::Clicked) {
+                self.load_calendar_travel(cx);
+            }
+        }
+
         // Handle "Load Static Data" button click (MpButton)
         let load_btn_ref = self.ui.widget(ids!(load_btn));
         if let Some(item) = actions.find_widget_action(load_btn_ref.widget_uid()) {
@@ -424,6 +443,49 @@ impl App {
                                     &format!("🛒 Added {} to cart!", product_id),
                                 );
                             }
+                        } else if user_action.action.name == "calendarCellClick" {
+                            let row = user_action.action.context.get("row")
+                                .and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+                            let col = user_action.action.context.get("col")
+                                .and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+
+                            // Read cell content from DataModel
+                            let mut detail = String::new();
+                            let sid = &user_action.surface_id;
+                            if let Some(surface) = surface_ref.borrow::<A2uiSurface>() {
+                                if let Some(processor) = surface.processor() {
+                                    if let Some(dm) = processor.get_data_model(sid) {
+                                        let line1 = dm.get_string(
+                                            &format!("/calendar/cells/{}/{}/line1", row, col)
+                                        ).unwrap_or("");
+                                        let line2 = dm.get_string(
+                                            &format!("/calendar/cells/{}/{}/line2", row, col)
+                                        ).unwrap_or("");
+                                        if !line1.is_empty() {
+                                            detail = if line2.is_empty() {
+                                                line1.to_string()
+                                            } else {
+                                                format!("{} - {}", line1, line2)
+                                            };
+                                        }
+                                    }
+                                }
+                            }
+
+                            let time_slot = match row {
+                                0 => "Header",
+                                1 => "🌅 AM",
+                                2 => "☀️ PM",
+                                3 => "🌙 Evening",
+                                4 => "💰 Budget",
+                                _ => "?",
+                            };
+                            let status = if detail.is_empty() {
+                                format!("📅 Day {} | {} (row={}, col={})", col + 1, time_slot, row, col)
+                            } else {
+                                format!("📅 Day {} | {} | {}", col + 1, time_slot, detail)
+                            };
+                            self.ui.label(ids!(status_label)).set_text(cx, &status);
                         } else {
                             self.ui.label(ids!(status_label)).set_text(
                                 cx,
@@ -600,7 +662,7 @@ impl App {
 
         // Connect to /rpc for initial UI load
         let config = A2uiHostConfig {
-            url: "http://localhost:8082/rpc".to_string(),
+            url: "http://localhost:8081/rpc".to_string(),
             auth_token: None,
         };
 
@@ -651,7 +713,7 @@ impl App {
     fn reconnect_live(&mut self, cx: &mut Cx) {
         // Reconnect to get updates (don't clear surface - we want incremental updates)
         let config = A2uiHostConfig {
-            url: "http://localhost:8082/rpc".to_string(),
+            url: "http://localhost:8081/rpc".to_string(),
             auth_token: None,
         };
 
@@ -930,6 +992,62 @@ impl App {
         } else {
             self.ui.label(ids!(status_label))
                 .set_text(cx, "Error loading travel app data");
+        }
+
+        self.ui.redraw(cx);
+    }
+
+    fn load_calendar_travel(&mut self, cx: &mut Cx) {
+        // Disconnect from server if connected
+        if self.host.is_some() {
+            self.disconnect(cx);
+        }
+        self.live_mode = false;
+
+        // Clear the surface before loading
+        let surface_ref = self.ui.widget(ids!(a2ui_surface));
+        if let Some(mut surface) = surface_ref.borrow_mut::<A2uiSurface>() {
+            surface.clear();
+        }
+
+        self.ui.label(ids!(title_label)).set_text(cx, "🗼 Tokyo 7-Day Travel Planner");
+
+        // Load calendar_travel.json from current directory
+        let json_str = match std::fs::read_to_string("calendar_travel.json") {
+            Ok(s) => s,
+            Err(e) => {
+                self.ui.label(ids!(status_label))
+                    .set_text(cx, &format!("Error: calendar_travel.json not found ({})", e));
+                self.ui.redraw(cx);
+                return;
+            }
+        };
+
+        let surface_ref = self.ui.widget(ids!(a2ui_surface));
+        let result = {
+            if let Some(mut surface) = surface_ref.borrow_mut::<A2uiSurface>() {
+                match surface.process_json(&json_str) {
+                    Ok(events) => {
+                        log!("Calendar travel: {} events processed", events.len());
+                        Some(events.len())
+                    }
+                    Err(e) => {
+                        log!("Error parsing calendar_travel.json: {}", e);
+                        None
+                    }
+                }
+            } else {
+                None
+            }
+        };
+
+        if let Some(count) = result {
+            self.ui.label(ids!(status_label))
+                .set_text(cx, &format!("Calendar View | {} events | Tokyo 7-Day Trip", count));
+            self.loaded = true;
+        } else {
+            self.ui.label(ids!(status_label))
+                .set_text(cx, "Error loading calendar travel data");
         }
 
         self.ui.redraw(cx);

@@ -49,8 +49,14 @@ impl A2uiSurface {
             ComponentType::Chart(chart) => {
                 self.render_chart(cx, scope, chart, data_model, component_id);
             }
+            ComponentType::Calendar(calendar) => {
+                self.render_calendar(cx, calendar, data_model);
+            }
             ComponentType::AudioPlayer(audio_player) => {
                 self.render_audio_player(cx, audio_player, data_model, component_id);
+            }
+            ComponentType::Divider(_) => {
+                self.render_divider(cx);
             }
             _ => {
                 // Unsupported component - skip for now
@@ -243,8 +249,6 @@ impl A2uiSurface {
                     let component_id = component_id.clone();
                     let data_binding = data_binding.clone();
                     for (index, _item) in array.iter().enumerate() {
-                        // For template rendering, we need to set up item context
-                        // For now, just render the template component
                         let item_path = format!("{}/{}", data_binding, index);
                         self.render_template_item(
                             cx,
@@ -270,7 +274,6 @@ impl A2uiSurface {
         item_path: &str,
     ) {
         // Set up scoped data model for template items
-        // Save previous scope and set new one
         let previous_scope = self.current_scope.take();
         self.current_scope = Some(item_path.to_string());
 
@@ -281,15 +284,16 @@ impl A2uiSurface {
         self.current_scope = previous_scope;
     }
 
+    // ============================================================================
+    // Text -> MpLabel pool
+    // ============================================================================
+
     fn render_text(&mut self, cx: &mut Cx2d, text: &TextComponent, data_model: &DataModel) {
-        // Use scoped resolution for template rendering
         let text_value = resolve_string_value_scoped(
             &text.text,
             data_model,
             self.current_scope.as_deref(),
         );
-
-
 
         // Determine font size based on usage hint
         let font_size = match text.usage_hint {
@@ -303,19 +307,21 @@ impl A2uiSurface {
             _ => 14.0, // Body default
         };
 
-        // Use different DrawText based on context for correct z-ordering:
-        // - Text inside button uses draw_button_text (drawn after draw_button)
-        // - Text inside card uses draw_card_text (drawn after draw_card)
-        // - Text outside both uses draw_text
-        if self.inside_button {
-            self.draw_button_text.text_style.font_size = font_size;
-            self.draw_button_text.draw_walk(cx, Walk::fit(), Align::default(), &text_value);
-        } else if self.inside_card {
+        if self.inside_card {
+            // Inside card containers: use DrawText directly (avoids draw ordering
+            // issues with MpLabel's #[redraw] scope inside DrawQuad.begin/end)
             self.draw_card_text.text_style.font_size = font_size;
             self.draw_card_text.draw_walk(cx, Walk::fit(), Align::default(), &text_value);
         } else {
-            self.draw_text.text_style.font_size = font_size;
-            self.draw_text.draw_walk(cx, Walk::fit(), Align::default(), &text_value);
+            // Outside cards: use MpLabel pool for full widget features
+            let label_idx = self.label_count;
+            self.label_count += 1;
+            let label = self.pool_label(cx, label_idx);
+            label.set_text(&text_value);
+            label.apply_over(cx, live! {
+                draw_text: { text_style: { font_size: (font_size) } }
+            });
+            let _ = label.draw_walk(cx, &mut Scope::empty(), Walk::fit());
         }
     }
 
@@ -380,6 +386,10 @@ impl A2uiSurface {
         self.draw_image_placeholder.end(cx);
     }
 
+    // ============================================================================
+    // Card rendering (still uses draw_card begin/end for container background)
+    // ============================================================================
+
     fn render_card(
         &mut self,
         cx: &mut Cx2d,
@@ -388,8 +398,6 @@ impl A2uiSurface {
         data_model: &DataModel,
         card: &CardComponent,
     ) {
-        // Use the standard Makepad pattern: begin/end with draw_bg
-        // The key is that begin() adds background instance, then children are drawn, then end() finalizes
         let walk = Walk {
             margin: Margin { left: 0.0, right: 0.0, top: 8.0, bottom: 8.0 },
             ..Walk::fill_fit()
@@ -405,119 +413,75 @@ impl A2uiSurface {
             ..Layout::default()
         };
 
-
-        // Begin card - this adds background instance and starts turtle
+        // Begin card background
         self.draw_card.begin(cx, walk, layout);
-
-        // Set flag to use card text (which will be drawn AFTER the card background)
         self.inside_card = true;
 
         // Render child content
         let child = card.child.clone();
         self.render_component(cx, scope, surface, data_model, &child);
 
-        // Reset flag
-        self.inside_card = false;
-
         // End card
+        self.inside_card = false;
         self.draw_card.end(cx);
-
     }
+
+    // ============================================================================
+    // Button -> MpButton pool
+    // ============================================================================
 
     fn render_button(
         &mut self,
         cx: &mut Cx2d,
-        scope: &mut Scope,
+        _scope: &mut Scope,
         surface: &crate::a2ui::processor::Surface,
         data_model: &DataModel,
         btn: &ButtonComponent,
         component_id: &str,
     ) {
-        // Get button index (this is the button we're about to render)
-        let button_idx = self.button_data.len();
+        let button_idx = self.button_meta.len();
 
-        // Get button state (hover/pressed) for this specific button
-        let is_hover = self.hovered_button_idx == Some(button_idx);
-        let is_pressed = self.pressed_button_idx == Some(button_idx);
+        // Resolve button text from child component
+        let button_text = self.resolve_button_text(surface, data_model, &btn.child);
 
-        // Set button color based on state
-        let base_color = vec4(0.231, 0.51, 0.965, 1.0);     // #3B82F6 - blue
-        let hover_color = vec4(0.145, 0.388, 0.922, 1.0);   // #2563EB - darker blue
-        let pressed_color = vec4(0.114, 0.306, 0.847, 1.0); // #1D4ED8 - even darker
+        // Get or grow button from pool
+        let button = self.pool_button(cx, button_idx);
 
-        let color = if is_pressed {
-            pressed_color
-        } else if is_hover {
-            hover_color
-        } else {
-            base_color
-        };
+        // Set button text
+        button.set_text(&button_text);
 
-        // Button layout with padding - this ensures text has proper spacing
-        let layout = Layout {
-            padding: Padding {
-                left: 16.0,
-                right: 16.0,
-                top: 8.0,
-                bottom: 8.0,
-            },
-            align: Align { x: 0.5, y: 0.5 },
-            ..Layout::default()
-        };
+        // Draw the button widget
+        let _ = button.draw_walk(cx, &mut Scope::empty(), Walk::fit());
 
-        // Record starting position before drawing
-        let start_pos = cx.turtle().pos();
-
-        // Draw button background with proper padding
-        self.draw_button.color = color;
-        self.draw_button.begin(cx, Walk::fit(), layout);
-
-        // Set flag to use button text (drawn after button background)
-        self.inside_button = true;
-
-        // Render button child (usually Text)
-        let child = btn.child.clone();
-        self.render_component(cx, scope, surface, data_model, &child);
-
-        // Reset flag
-        self.inside_button = false;
-
-        // End button background
-        self.draw_button.end(cx);
-
-        // Calculate button rect from start position and current turtle position
-        let end_pos = cx.turtle().pos();
-        // For Flow::Right, the width is the difference in x, height needs to be calculated
-        // Use the used rect from turtle
-        let used_rect = cx.turtle().used();
-        let button_rect = Rect {
-            pos: start_pos,
-            size: dvec2(end_pos.x - start_pos.x, used_rect.y),
-        };
-
-        // Update or create Area for this button using add_rect_area
-        // Reuse existing Area if available to maintain event tracking across frames
-        if button_idx < self.button_areas.len() {
-            // Update existing area
-            cx.add_rect_area(&mut self.button_areas[button_idx], button_rect);
-        } else {
-            // Create new area
-            let mut button_area = Area::Empty;
-            cx.add_rect_area(&mut button_area, button_rect);
-            self.button_areas.push(button_area);
-        }
-
-
-        // Store button metadata including template scope for action context resolution
-        self.button_data.push((
+        // Store metadata
+        self.button_meta.push((
             component_id.to_string(),
             btn.action.clone(),
             self.current_scope.clone(),
         ));
     }
 
+    /// Resolve button text by looking at child component (usually a Text component)
+    fn resolve_button_text(
+        &self,
+        surface: &crate::a2ui::processor::Surface,
+        data_model: &DataModel,
+        child_id: &str,
+    ) -> String {
+        if let Some(component_def) = surface.get_component(child_id) {
+            if let ComponentType::Text(text) = &component_def.component {
+                return resolve_string_value_scoped(
+                    &text.text,
+                    data_model,
+                    self.current_scope.as_deref(),
+                );
+            }
+        }
+        String::new()
+    }
+
     // ============================================================================
-    // TextField Rendering
+    // TextField -> TextInput pool
     // ============================================================================
 
     fn render_text_field(
@@ -527,15 +491,14 @@ impl A2uiSurface {
         data_model: &DataModel,
         component_id: &str,
     ) {
-        let text_field_idx = self.text_field_data.len();
-        let is_focused = self.focused_text_field_idx == Some(text_field_idx);
+        let text_input_idx = self.text_input_meta.len();
 
-        // Get current value - use input buffer if focused, otherwise from data model
-        let current_value = if is_focused {
-            self.text_input_buffer.clone()
-        } else {
-            resolve_string_value_scoped(&text_field.text, data_model, self.current_scope.as_deref())
-        };
+        // Get current value from data model
+        let current_value = resolve_string_value_scoped(
+            &text_field.text,
+            data_model,
+            self.current_scope.as_deref(),
+        );
 
         // Get placeholder text
         let placeholder = text_field
@@ -553,73 +516,20 @@ impl A2uiSurface {
             }
         });
 
-        // Layout
-        let walk = Walk {
-            width: Size::Fixed(200.0),
-            height: Size::Fixed(36.0),
-            ..Walk::default()
-        };
-        let layout = Layout {
-            padding: Padding {
-                left: 12.0,
-                right: 12.0,
-                top: 8.0,
-                bottom: 8.0,
-            },
-            align: Align { x: 0.0, y: 0.5 },
-            ..Layout::default()
-        };
+        // Get or grow text input from pool
+        let text_input = self.pool_text_input(cx, text_input_idx);
 
-        // Record start position
-        let start_pos = cx.turtle().pos();
-
-        // Set focus state
-        self.draw_text_field.focus = if is_focused { 1.0 } else { 0.0 };
-
-        // Draw background
-        self.draw_text_field.begin(cx, walk, layout);
-
-        // Draw text or placeholder
-        if current_value.is_empty() && !is_focused {
-            self.draw_text_field_placeholder
-                .draw_walk(cx, Walk::fit(), Align::default(), &placeholder);
-        } else {
-            // Draw text with cursor if focused
-            if is_focused {
-                // Draw text before cursor
-                let (before, after) = current_value.split_at(self.cursor_pos.min(current_value.len()));
-                self.draw_text_field_text
-                    .draw_walk(cx, Walk::fit(), Align::default(), before);
-                // Draw cursor (simple vertical line approximation using |)
-                self.draw_text_field_text
-                    .draw_walk(cx, Walk::fit(), Align::default(), "|");
-                self.draw_text_field_text
-                    .draw_walk(cx, Walk::fit(), Align::default(), after);
-            } else {
-                self.draw_text_field_text
-                    .draw_walk(cx, Walk::fit(), Align::default(), &current_value);
-            }
+        // Set text and placeholder
+        text_input.set_text(cx, &current_value);
+        if !placeholder.is_empty() {
+            text_input.set_empty_text(cx, placeholder.clone());
         }
 
-        self.draw_text_field.end(cx);
-
-        // Calculate rect for hit testing (using fixed size)
-        let rect = Rect {
-            pos: start_pos,
-            size: dvec2(200.0, 36.0),
-        };
-
-        // Update or create area
-        if text_field_idx < self.text_field_areas.len() {
-            cx.add_rect_area(&mut self.text_field_areas[text_field_idx], rect);
-        } else {
-            let mut area = Area::Empty;
-            cx.add_rect_area(&mut area, rect);
-            self.text_field_areas.push(area);
-        }
+        // Draw the text input widget
+        let _ = text_input.draw_walk(cx, &mut Scope::empty(), Walk::new(Size::Fixed(300.0), Size::fit()));
 
         // Store metadata
-        self.text_field_data.push((
+        self.text_input_meta.push((
             component_id.to_string(),
             binding_path,
             current_value,
@@ -627,7 +537,7 @@ impl A2uiSurface {
     }
 
     // ============================================================================
-    // CheckBox Rendering
+    // CheckBox -> MpCheckbox pool
     // ============================================================================
 
     fn render_checkbox(
@@ -637,8 +547,7 @@ impl A2uiSurface {
         data_model: &DataModel,
         component_id: &str,
     ) {
-        let checkbox_idx = self.checkbox_data.len();
-        let is_hovered = self.hovered_checkbox_idx == Some(checkbox_idx);
+        let checkbox_idx = self.checkbox_meta.len();
 
         // Get current checked state
         let is_checked =
@@ -660,69 +569,25 @@ impl A2uiSurface {
             }
         });
 
-        // Record start position
-        let start_pos = cx.turtle().pos();
+        // Get or grow checkbox from pool
+        let cb = self.pool_checkbox(cx, checkbox_idx);
 
-        // Draw checkbox row
-        let row_walk = Walk::fit();
-        let row_layout = Layout {
-            flow: Flow::right(),
-            spacing: 8.0,
-            align: Align { x: 0.0, y: 0.5 },
-            ..Layout::default()
-        };
-
-        cx.begin_turtle(row_walk, row_layout);
-
-        // Draw checkbox box
-        let checkbox_walk = Walk {
-            width: Size::Fixed(20.0),
-            height: Size::Fixed(20.0),
-            ..Walk::default()
-        };
-
-        self.draw_checkbox.checked = if is_checked { 1.0 } else { 0.0 };
-        self.draw_checkbox.hover = if is_hovered { 1.0 } else { 0.0 };
-        self.draw_checkbox.draw_walk(cx, checkbox_walk);
-
-        // Draw label
+        // Set state
+        cb.set_checked(cx, is_checked);
         if !label.is_empty() {
-            if self.inside_card {
-                self.draw_card_text
-                    .draw_walk(cx, Walk::fit(), Align::default(), &label);
-            } else {
-                self.draw_checkbox_label
-                    .draw_walk(cx, Walk::fit(), Align::default(), &label);
-            }
+            cb.set_text(&label);
         }
 
-        // Get the used rect before ending turtle
-        let used = cx.turtle().used();
-        cx.end_turtle();
-
-        // Calculate rect for hit testing using the actual used space
-        // Ensure minimum clickable area: 200px wide, 28px high
-        let rect = Rect {
-            pos: start_pos,
-            size: dvec2(used.x.max(200.0), used.y.max(28.0)),
-        };
-
-        // Update or create area
-        if checkbox_idx < self.checkbox_areas.len() {
-            cx.add_rect_area(&mut self.checkbox_areas[checkbox_idx], rect);
-        } else {
-            let mut area = Area::Empty;
-            cx.add_rect_area(&mut area, rect);
-            self.checkbox_areas.push(area);
-        }
+        // Draw the checkbox widget
+        let _ = cb.draw_walk(cx, &mut Scope::empty(), Walk::fit());
 
         // Store metadata
-        self.checkbox_data
+        self.checkbox_meta
             .push((component_id.to_string(), binding_path, is_checked));
     }
 
     // ============================================================================
-    // Slider Rendering
+    // Slider -> MpSlider pool
     // ============================================================================
 
     fn render_slider(
@@ -732,22 +597,13 @@ impl A2uiSurface {
         data_model: &DataModel,
         component_id: &str,
     ) {
-        let slider_idx = self.slider_data.len();
-        let _is_hovered = self.hovered_slider_idx == Some(slider_idx);
-        let _is_dragging = self.dragging_slider_idx == Some(slider_idx);
+        let slider_idx = self.slider_meta.len();
 
         // Get values
         let current_value =
             resolve_number_value_scoped(&slider.value, data_model, self.current_scope.as_deref());
         let min = slider.min.unwrap_or(0.0);
         let max = slider.max.unwrap_or(100.0);
-
-        // Calculate progress (0.0 to 1.0)
-        let progress = if max > min {
-            ((current_value - min) / (max - min)).clamp(0.0, 1.0)
-        } else {
-            0.0
-        };
 
         // Get binding path
         let binding_path = slider.value.as_path().map(|p| {
@@ -758,70 +614,38 @@ impl A2uiSurface {
             }
         });
 
-        // Record start position
-        let start_pos = cx.turtle().pos();
+        // Get or grow slider from pool
+        let sl = self.pool_slider(cx, slider_idx);
 
-        // Slider dimensions
-        let slider_width = 200.0;
-        let track_height = 6.0;
-        let thumb_size = 18.0;
+        // Set range and value
+        sl.set_range(min, max);
+        sl.set_single_value(cx, current_value);
 
-        // Draw slider container
-        let container_walk = Walk {
-            width: Size::Fixed(slider_width),
-            height: Size::Fixed(thumb_size),
-            ..Walk::default()
-        };
-        let container_layout = Layout {
-            align: Align { x: 0.0, y: 0.5 },
-            ..Layout::default()
-        };
-
-        cx.begin_turtle(container_walk, container_layout);
-
-        // Draw track
-        let track_walk = Walk {
-            width: Size::Fixed(slider_width),
-            height: Size::Fixed(track_height),
-            margin: Margin {
-                top: (thumb_size - track_height) / 2.0,
-                ..Margin::default()
-            },
-            ..Walk::default()
-        };
-
-        self.draw_slider_track.progress = progress as f32;
-        self.draw_slider_track.draw_walk(cx, track_walk);
-
-        cx.end_turtle();
-
-        // Draw thumb (overlay at correct position)
-        // Note: For proper overlay we'd need absolute positioning
-        // For now, we'll use a simpler approach
-
-        // Calculate rect for hit testing (the entire slider area)
-        let rect = Rect {
-            pos: start_pos,
-            size: dvec2(slider_width, thumb_size),
-        };
-
-        // Update or create area
-        if slider_idx < self.slider_areas.len() {
-            cx.add_rect_area(&mut self.slider_areas[slider_idx], rect);
-        } else {
-            let mut area = Area::Empty;
-            cx.add_rect_area(&mut area, rect);
-            self.slider_areas.push(area);
-        }
+        // Draw the slider widget
+        let _ = sl.draw_walk(cx, &mut Scope::empty(), Walk::new(Size::Fixed(200.0), Size::Fixed(24.0)));
 
         // Store metadata
-        self.slider_data.push((
+        self.slider_meta.push((
             component_id.to_string(),
             binding_path,
             min,
             max,
             current_value,
         ));
+    }
+
+    // ============================================================================
+    // Divider rendering
+    // ============================================================================
+
+    fn render_divider(&mut self, cx: &mut Cx2d) {
+        let walk = Walk {
+            width: Size::fill(),
+            height: Size::Fixed(1.0),
+            margin: Margin { top: 8.0, bottom: 8.0, left: 0.0, right: 0.0 },
+            ..Walk::default()
+        };
+        self.draw_divider.draw_walk(cx, walk);
     }
 
     // ============================================================================
@@ -836,8 +660,6 @@ impl A2uiSurface {
         data_model: &DataModel,
         list: &ListComponent,
     ) {
-        // For now, render List similar to Column
-        // TODO: Implement PortalList for virtualized scrolling
         let walk = Walk::fill_fit();
         let layout = Layout {
             flow: Flow::Down,

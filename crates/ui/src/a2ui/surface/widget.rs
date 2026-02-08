@@ -12,6 +12,12 @@ use crate::a2ui::{
         resolve_string_value_scoped, A2uiMessageProcessor, ProcessorEvent,
     },
 };
+use crate::widgets::{
+    button::MpButton,
+    checkbox::{MpCheckbox, MpCheckboxAction},
+    slider::{MpSlider, MpSliderAction},
+    label::MpLabel,
+};
 
 use super::draw_types::*;
 
@@ -52,14 +58,17 @@ live_design! {
     use crate::theme::colors::*;
 
     use crate::a2ui::surface::draw_types::DrawA2uiImage;
-    use crate::a2ui::surface::draw_types::DrawA2uiTextField;
-    use crate::a2ui::surface::draw_types::DrawA2uiCheckBox;
-    use crate::a2ui::surface::draw_types::DrawA2uiSliderTrack;
-    use crate::a2ui::surface::draw_types::DrawA2uiSliderThumb;
     use crate::a2ui::surface::draw_types::DrawA2uiChartLine;
     use crate::a2ui::surface::draw_types::DrawA2uiArc;
     use crate::a2ui::surface::draw_types::DrawA2uiQuad;
+    use crate::a2ui::surface::draw_types::DrawA2uiCalendarCell;
     use crate::a2ui::surface::draw_types::DrawAudioBars;
+
+    // Widget templates for pool cloning
+    use crate::widgets::button::MpButton;
+    use crate::widgets::checkbox::MpCheckbox;
+    use crate::widgets::slider::MpSlider;
+    use crate::widgets::label::MpLabel;
 
     pub A2uiSurface = {{A2uiSurface}} {
         width: Fill
@@ -74,22 +83,7 @@ live_design! {
             }
         }
 
-        draw_text: {
-            text_style: <THEME_FONT_REGULAR> {
-                font_size: 14.0
-                line_spacing: 1.4
-            }
-            color: #FFFFFF
-        }
-
-        draw_card_text: {
-            text_style: <THEME_FONT_REGULAR> {
-                font_size: 14.0
-                line_spacing: 1.4
-            }
-            color: #FFFFFF
-        }
-
+        // Card background (DrawColor begin/end pattern for Card containers)
         draw_card: {
             color: #2a3a5a
             instance border_color: #5588bb
@@ -109,25 +103,6 @@ live_design! {
                 sdf.stroke(self.border_color, self.border_width);
                 return sdf.result;
             }
-        }
-
-        draw_button: {
-            instance border_radius: 6.0
-
-            fn pixel(self) -> vec4 {
-                let sdf = Sdf2d::viewport(self.pos * self.rect_size);
-                sdf.box(1.0, 1.0, self.rect_size.x - 2.0, self.rect_size.y - 2.0, self.border_radius);
-                sdf.fill(self.color);
-                return sdf.result;
-            }
-        }
-
-        draw_button_text: {
-            text_style: <THEME_FONT_BOLD> {
-                font_size: 14.0
-                line_spacing: 1.4
-            }
-            color: #FFFFFF
         }
 
         draw_image_placeholder: {
@@ -157,47 +132,6 @@ live_design! {
 
         draw_image: <DrawA2uiImage> {}
 
-        draw_text_field: <DrawA2uiTextField> {
-            border_color: #5588bb
-            bg_color: #2a3a5a
-        }
-
-        draw_text_field_text: {
-            text_style: <THEME_FONT_REGULAR> {
-                font_size: 14.0
-            }
-            color: #FFFFFF
-        }
-
-        draw_text_field_placeholder: {
-            text_style: <THEME_FONT_REGULAR> {
-                font_size: 14.0
-            }
-            color: #888888
-        }
-
-        draw_checkbox: <DrawA2uiCheckBox> {
-            border_color: #5588bb
-            bg_color: #2a3a5a
-            check_color: #3B82F6
-        }
-
-        draw_checkbox_label: {
-            text_style: <THEME_FONT_REGULAR> {
-                font_size: 14.0
-            }
-            color: #FFFFFF
-        }
-
-        draw_slider_track: <DrawA2uiSliderTrack> {
-            track_color: #3a4a6a
-            fill_color: #3B82F6
-        }
-
-        draw_slider_thumb: <DrawA2uiSliderThumb> {
-            thumb_color: #FFFFFF
-        }
-
         draw_chart_line: <DrawA2uiChartLine> {}
         draw_chart_arc: <DrawA2uiArc> {}
         draw_chart_text: {
@@ -207,6 +141,26 @@ live_design! {
             color: #AABBCC
         }
         draw_chart_quad: <DrawA2uiQuad> {}
+
+        // Divider draw
+        draw_divider: {
+            color: #5588bb
+
+            fn pixel(self) -> vec4 {
+                return self.color;
+            }
+        }
+
+        // Calendar grid draw instances
+        draw_calendar_cell: <DrawA2uiCalendarCell> {}
+        draw_calendar_text: {
+            text_style: <THEME_FONT_REGULAR> { font_size: 11.0, line_spacing: 1.3 }
+            color: #FFFFFF
+        }
+        draw_calendar_header_text: {
+            text_style: <THEME_FONT_BOLD> { font_size: 13.0, line_spacing: 1.3 }
+            color: #FFFFFF
+        }
 
         plot_line: <LinePlot> {}
         plot_bar: <BarPlot> {}
@@ -238,6 +192,130 @@ live_design! {
         plot_line3d: <Line3D> {}
         draw_audio_bars: <DrawAudioBars> {}
 
+        // Audio player button (draw_button/draw_button_text still used by audio player)
+        draw_button: {
+            instance border_radius: 6.0
+
+            fn pixel(self) -> vec4 {
+                let sdf = Sdf2d::viewport(self.pos * self.rect_size);
+                sdf.box(1.0, 1.0, self.rect_size.x - 2.0, self.rect_size.y - 2.0, self.border_radius);
+                sdf.fill(self.color);
+                return sdf.result;
+            }
+        }
+
+        draw_button_text: {
+            text_style: <THEME_FONT_BOLD> {
+                font_size: 14.0
+                line_spacing: 1.4
+            }
+            color: #FFFFFF
+        }
+
+        draw_card_text: {
+            text_style: <THEME_FONT_REGULAR> {
+                font_size: 14.0
+                line_spacing: 1.4
+            }
+            color: #FFFFFF
+        }
+
+        // Widget templates for pool cloning
+        // Override text colors for dark A2UI background (#1a1a2e / #2a3a5a)
+        tpl_button: <MpButton> {}
+        tpl_checkbox: <MpCheckbox> {
+            // Override label color for dark bg
+            draw_label: { color: #E0E0E0 }
+        }
+        tpl_slider: <MpSlider> { width: 200 }
+        tpl_label: <MpLabel> {
+            draw_text: {
+                color: #E0E0E0
+            }
+        }
+        tpl_text_input: <TextInput> {
+            width: 200
+            height: Fit
+            padding: { left: 12, right: 12, top: 8, bottom: 8 }
+            empty_text: ""
+
+            draw_bg: {
+                instance hover: 0.0
+                instance focus: 0.0
+
+                uniform border_radius: 6.0
+                uniform border_width: 1.0
+                uniform bg_color: #2a3a5a
+                uniform border_color: #5588bb
+                uniform border_color_focus: #3B82F6
+
+                fn pixel(self) -> vec4 {
+                    let sdf = Sdf2d::viewport(self.pos * self.rect_size);
+                    sdf.box(
+                        self.border_width,
+                        self.border_width,
+                        self.rect_size.x - self.border_width * 2.0,
+                        self.rect_size.y - self.border_width * 2.0,
+                        self.border_radius
+                    );
+                    sdf.fill_keep(self.bg_color);
+                    let border = mix(self.border_color, self.border_color_focus, self.focus);
+                    sdf.stroke(border, self.border_width);
+                    return sdf.result;
+                }
+            }
+
+            draw_text: {
+                text_style: <THEME_FONT_REGULAR> { font_size: 14.0 }
+                fn get_color(self) -> vec4 {
+                    return mix(#FFFFFF, #888888, self.empty);
+                }
+            }
+
+            draw_cursor: {
+                fn pixel(self) -> vec4 {
+                    let sdf = Sdf2d::viewport(self.pos * self.rect_size);
+                    sdf.box(0., 0., self.rect_size.x, self.rect_size.y, 1.0);
+                    sdf.fill(mix(#0000, #3B82F6, self.focus * (1.0 - self.blink)));
+                    return sdf.result;
+                }
+            }
+
+            draw_selection: {
+                fn pixel(self) -> vec4 {
+                    let sdf = Sdf2d::viewport(self.pos * self.rect_size);
+                    sdf.box(0., 0., self.rect_size.x, self.rect_size.y, 2.0);
+                    sdf.fill(#3B82F620);
+                    return sdf.result;
+                }
+            }
+
+            animator: {
+                hover = {
+                    default: off,
+                    off = {
+                        from: {all: Forward {duration: 0.15}}
+                        apply: { draw_bg: {hover: 0.0} }
+                    }
+                    on = {
+                        from: {all: Forward {duration: 0.1}}
+                        apply: { draw_bg: {hover: 1.0} }
+                    }
+                }
+                focus = {
+                    default: off,
+                    off = {
+                        from: {all: Forward {duration: 0.2}}
+                        apply: { draw_bg: {focus: 0.0}, draw_cursor: {focus: 0.0} }
+                    }
+                    on = {
+                        from: {all: Snap}
+                        apply: { draw_bg: {focus: 1.0}, draw_cursor: {focus: 1.0} }
+                    }
+                }
+            }
+        }
+
         img_headphones: dep("crate://self/resources/headphones.jpg")
         img_mouse: dep("crate://self/resources/mouse.jpg")
         img_keyboard: dep("crate://self/resources/keyboard.jpg")
@@ -263,27 +341,10 @@ pub struct A2uiSurface {
     #[layout]
     layout: Layout,
 
-    /// Draw text for rendering text components (outside cards)
-    #[live]
-    draw_text: DrawText,
-
-    /// Draw text for content inside cards (separate draw item for correct z-order)
-    #[live]
-    draw_card_text: DrawText,
-
-    /// Draw card background
+    /// Draw card background (begin/end pattern for Card containers)
     #[redraw]
     #[live]
     draw_card: DrawColor,
-
-    /// Draw button background (with rounded corners shader)
-    #[redraw]
-    #[live]
-    draw_button: DrawColor,
-
-    /// Draw text for button labels (drawn after button background)
-    #[live]
-    draw_button_text: DrawText,
 
     /// Draw image placeholder background
     #[redraw]
@@ -298,38 +359,6 @@ pub struct A2uiSurface {
     #[redraw]
     #[live]
     draw_image: DrawA2uiImage,
-
-    /// Draw text field background
-    #[redraw]
-    #[live]
-    draw_text_field: DrawA2uiTextField,
-
-    /// Draw text for text field input
-    #[live]
-    draw_text_field_text: DrawText,
-
-    /// Draw text for text field placeholder
-    #[live]
-    draw_text_field_placeholder: DrawText,
-
-    /// Draw checkbox
-    #[redraw]
-    #[live]
-    draw_checkbox: DrawA2uiCheckBox,
-
-    /// Draw checkbox label
-    #[live]
-    draw_checkbox_label: DrawText,
-
-    /// Draw slider track
-    #[redraw]
-    #[live]
-    draw_slider_track: DrawA2uiSliderTrack,
-
-    /// Draw slider thumb
-    #[redraw]
-    #[live]
-    draw_slider_thumb: DrawA2uiSliderThumb,
 
     /// Draw chart line segment (chord chart)
     #[redraw]
@@ -349,6 +378,24 @@ pub struct A2uiSurface {
     #[redraw]
     #[live]
     draw_chart_quad: DrawA2uiQuad,
+
+    /// Draw divider line
+    #[redraw]
+    #[live]
+    draw_divider: DrawColor,
+
+    /// Draw calendar cell background
+    #[redraw]
+    #[live]
+    draw_calendar_cell: DrawA2uiCalendarCell,
+
+    /// Draw calendar text (regular)
+    #[live]
+    draw_calendar_text: DrawText,
+
+    /// Draw calendar header text (bold)
+    #[live]
+    draw_calendar_header_text: DrawText,
 
     // makepad-plot chart widget instances
     #[live] plot_line: LinePlot,
@@ -379,12 +426,78 @@ pub struct A2uiSurface {
     #[live] plot_surface3d: Surface3D,
     #[live] plot_scatter3d: Scatter3D,
     #[live] plot_line3d: Line3D,
+
     /// Draw audio bars visualization
     #[redraw]
     #[live]
     draw_audio_bars: DrawAudioBars,
 
-    /// Image sources (preloaded)
+    // ============================================================================
+    // Widget pool templates (used to clone new pool instances)
+    // ============================================================================
+
+    #[live] tpl_button: Option<LivePtr>,
+    #[live] tpl_checkbox: Option<LivePtr>,
+    #[live] tpl_slider: Option<LivePtr>,
+    #[live] tpl_label: Option<LivePtr>,
+    #[live] tpl_text_input: Option<LivePtr>,
+
+    // ============================================================================
+    // Widget pools
+    // ============================================================================
+
+    /// Pool of MpButton instances
+    #[rust]
+    mp_buttons: Vec<MpButton>,
+
+    /// Pool of MpCheckbox instances
+    #[rust]
+    mp_checkboxes: Vec<MpCheckbox>,
+
+    /// Pool of MpSlider instances
+    #[rust]
+    mp_sliders: Vec<MpSlider>,
+
+    /// Pool of MpLabel instances
+    #[rust]
+    mp_labels: Vec<MpLabel>,
+
+    /// Pool of TextInput instances
+    #[rust]
+    mp_text_inputs: Vec<TextInput>,
+
+    // ============================================================================
+    // Pool metadata (maps pool index to A2UI component info)
+    // ============================================================================
+
+    /// Button metadata: (component_id, action_def, scope)
+    #[rust]
+    button_meta: Vec<(String, Option<ActionDefinition>, Option<String>)>,
+
+    /// Checkbox metadata: (component_id, binding_path, checked_value)
+    #[rust]
+    checkbox_meta: Vec<(String, Option<String>, bool)>,
+
+    /// Slider metadata: (component_id, binding_path, min, max, value)
+    #[rust]
+    slider_meta: Vec<(String, Option<String>, f64, f64, f64)>,
+
+    /// TextInput metadata: (component_id, binding_path, value)
+    #[rust]
+    text_input_meta: Vec<(String, Option<String>, String)>,
+
+    /// Frame counter for label pool (reset each frame, used as pool index)
+    #[rust]
+    label_count: usize,
+
+    /// Whether currently rendering inside a Card (for audio player rendering)
+    #[rust]
+    inside_card: bool,
+
+    // ============================================================================
+    // Image sources (preloaded)
+    // ============================================================================
+
     #[live]
     img_headphones: LiveDependency,
     #[live]
@@ -419,98 +532,33 @@ pub struct A2uiSurface {
     #[rust]
     area: Area,
 
-    /// Flag to track if we're inside a card context (for correct text draw ordering)
-    #[rust]
-    inside_card: bool,
-
-    /// Flag to track if we're inside a button context
-    #[rust]
-    inside_button: bool,
-
-    /// Button areas for event.hits() detection - each button has independent Area
-    #[rust]
-    button_areas: Vec<Area>,
-
-    /// Button metadata: (component_id, Option<ActionDefinition>, Option<scope>)
-    #[rust]
-    button_data: Vec<(String, Option<ActionDefinition>, Option<String>)>,
-
-    /// Currently hovered button index (only one at a time)
-    #[rust]
-    hovered_button_idx: Option<usize>,
-
-    /// Currently pressed button index (only one at a time)
-    #[rust]
-    pressed_button_idx: Option<usize>,
-
     /// Current template scope path for relative path resolution
-    /// When rendering inside a template, this is set to the item path (e.g., "/products/0")
     #[rust]
     current_scope: Option<String>,
 
     // ============================================================================
-    // TextField state tracking
+    // AudioPlayer state tracking (kept - no MpAudioPlayer widget exists)
     // ============================================================================
 
-    /// TextField areas for event detection
-    #[rust]
-    text_field_areas: Vec<Area>,
-
-    /// TextField metadata: (component_id, binding_path, current_value)
-    #[rust]
-    text_field_data: Vec<(String, Option<String>, String)>,
-
-    /// Currently focused text field index
-    #[rust]
-    focused_text_field_idx: Option<usize>,
-
-    /// Text input buffer for focused field
-    #[rust]
-    text_input_buffer: String,
-
-    /// Cursor position in text input
-    #[rust]
-    cursor_pos: usize,
-
     // ============================================================================
-    // CheckBox state tracking
+    // Calendar state tracking
     // ============================================================================
 
-    /// CheckBox areas for event detection
+    /// Calendar cell areas for hit testing
     #[rust]
-    checkbox_areas: Vec<Area>,
+    calendar_cell_areas: Vec<Area>,
 
-    /// CheckBox metadata: (component_id, binding_path, current_value)
+    /// Calendar cell metadata: (row_idx, col_idx)
     #[rust]
-    checkbox_data: Vec<(String, Option<String>, bool)>,
+    calendar_cell_meta: Vec<(usize, usize)>,
 
-    /// Currently hovered checkbox index
+    /// Currently selected calendar cell (row, col)
     #[rust]
-    hovered_checkbox_idx: Option<usize>,
+    calendar_selected_cell: Option<(usize, usize)>,
 
-    // ============================================================================
-    // Slider state tracking
-    // ============================================================================
-
-    /// Slider areas for event detection
+    /// Currently hovered calendar cell index
     #[rust]
-    slider_areas: Vec<Area>,
-
-    /// Slider metadata: (component_id, binding_path, min, max, current_value)
-    #[rust]
-    slider_data: Vec<(String, Option<String>, f64, f64, f64)>,
-
-    /// Currently dragging slider index
-    #[rust]
-    dragging_slider_idx: Option<usize>,
-
-    /// Currently hovered slider index
-    #[rust]
-    hovered_slider_idx: Option<usize>,
-
-    // ============================================================================
-    // AudioPlayer state tracking
-    // ============================================================================
+    calendar_hovered_idx: Option<usize>,
 
     /// AudioPlayer button areas for event detection (play buttons)
     #[rust]
@@ -527,6 +575,23 @@ pub struct A2uiSurface {
     /// Currently playing audio component ID (for Play/Stop toggle)
     #[rust]
     playing_component_id: Option<String>,
+
+    // ============================================================================
+    // Audio player still uses draw_button for its play/stop button rendering
+    // Keep a DrawColor + DrawText for the audio player button only
+    // ============================================================================
+    /// Draw button background for audio player only
+    #[redraw]
+    #[live]
+    draw_button: DrawColor,
+
+    /// Draw text for audio player button only
+    #[live]
+    draw_button_text: DrawText,
+
+    /// Draw text for card content (audio player text inside cards)
+    #[live]
+    draw_card_text: DrawText,
 }
 
 impl A2uiSurface {
@@ -550,22 +615,23 @@ impl A2uiSurface {
             bg_color: (colors.bg_surface)
         });
 
-        // Apply text colors
-        self.draw_text.apply_over(cx, live! {
-            color: (colors.text_primary)
-        });
-
-        self.draw_card_text.apply_over(cx, live! {
-            color: (colors.text_primary)
-        });
-
         // Apply card colors
         self.draw_card.apply_over(cx, live! {
             color: (colors.bg_card)
             border_color: (colors.border_color)
         });
 
-        // Apply button colors - the shader uses hardcoded colors, so we update via instance
+        // Apply divider color
+        self.draw_divider.apply_over(cx, live! {
+            color: (colors.border_color)
+        });
+
+        // Apply image placeholder text
+        self.draw_image_text.apply_over(cx, live! {
+            color: (colors.text_secondary)
+        });
+
+        // Apply button color for audio player
         self.draw_button.apply_over(cx, live! {
             color: (colors.accent)
         });
@@ -574,40 +640,8 @@ impl A2uiSurface {
             color: (vec4(1.0, 1.0, 1.0, 1.0))
         });
 
-        // Apply text field colors
-        self.draw_text_field.apply_over(cx, live! {
-            bg_color: (colors.input_bg)
-            border_color: (colors.border_color)
-        });
-
-        self.draw_text_field_text.apply_over(cx, live! {
+        self.draw_card_text.apply_over(cx, live! {
             color: (colors.text_primary)
-        });
-
-        self.draw_text_field_placeholder.apply_over(cx, live! {
-            color: (colors.text_secondary)
-        });
-
-        // Apply checkbox colors
-        self.draw_checkbox.apply_over(cx, live! {
-            bg_color: (colors.input_bg)
-            border_color: (colors.border_color)
-            check_color: (colors.control_fill)
-        });
-
-        self.draw_checkbox_label.apply_over(cx, live! {
-            color: (colors.text_primary)
-        });
-
-        // Apply slider colors
-        self.draw_slider_track.apply_over(cx, live! {
-            track_color: (colors.slider_track)
-            fill_color: (colors.control_fill)
-        });
-
-        // Apply image placeholder text
-        self.draw_image_text.apply_over(cx, live! {
-            color: (colors.text_secondary)
         });
     }
 
@@ -738,6 +772,51 @@ impl A2uiSurface {
         // For now, use "main" as default
         "main".to_string()
     }
+
+    /// Get or grow a button from the pool
+    fn pool_button(&mut self, cx: &mut Cx, idx: usize) -> &mut MpButton {
+        while self.mp_buttons.len() <= idx {
+            let new_btn = MpButton::new_from_ptr(cx, self.tpl_button);
+            self.mp_buttons.push(new_btn);
+        }
+        &mut self.mp_buttons[idx]
+    }
+
+    /// Get or grow a checkbox from the pool
+    fn pool_checkbox(&mut self, cx: &mut Cx, idx: usize) -> &mut MpCheckbox {
+        while self.mp_checkboxes.len() <= idx {
+            let new_cb = MpCheckbox::new_from_ptr(cx, self.tpl_checkbox);
+            self.mp_checkboxes.push(new_cb);
+        }
+        &mut self.mp_checkboxes[idx]
+    }
+
+    /// Get or grow a slider from the pool
+    fn pool_slider(&mut self, cx: &mut Cx, idx: usize) -> &mut MpSlider {
+        while self.mp_sliders.len() <= idx {
+            let new_sl = MpSlider::new_from_ptr(cx, self.tpl_slider);
+            self.mp_sliders.push(new_sl);
+        }
+        &mut self.mp_sliders[idx]
+    }
+
+    /// Get or grow a label from the pool
+    fn pool_label(&mut self, cx: &mut Cx, idx: usize) -> &mut MpLabel {
+        while self.mp_labels.len() <= idx {
+            let new_lb = MpLabel::new_from_ptr(cx, self.tpl_label);
+            self.mp_labels.push(new_lb);
+        }
+        &mut self.mp_labels[idx]
+    }
+
+    /// Get or grow a text input from the pool
+    fn pool_text_input(&mut self, cx: &mut Cx, idx: usize) -> &mut TextInput {
+        while self.mp_text_inputs.len() <= idx {
+            let new_ti = TextInput::new_from_ptr(cx, self.tpl_text_input);
+            self.mp_text_inputs.push(new_ti);
+        }
+        &mut self.mp_text_inputs[idx]
+    }
 }
 
 // Widget trait implementation (handle_event + draw_walk)
@@ -748,6 +827,9 @@ include!("render_impl.rs");
 
 // Render methods - charts, chord, audio player
 include!("render_charts_impl.rs");
+
+// Render methods - calendar grid
+include!("render_calendar_impl.rs");
 
 impl A2uiSurfaceRef {
     /// Process A2UI JSON messages

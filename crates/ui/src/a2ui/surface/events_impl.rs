@@ -5,217 +5,161 @@ impl Widget for A2uiSurface {
         self.plot_scatter3d.handle_event(cx, event, scope);
         self.plot_line3d.handle_event(cx, event, scope);
 
-        let mut needs_redraw = false;
         let surface_id = self.get_surface_id();
 
-        // Handle text input events for focused text field
-        if let Some(focused_idx) = self.focused_text_field_idx {
-            if let Event::TextInput(te) = event {
-                // Insert text at cursor position
-                self.text_input_buffer.insert_str(self.cursor_pos, &te.input);
-                self.cursor_pos += te.input.len();
-                needs_redraw = true;
+        // Forward events to all widget pools and capture their actions
+        let actions = cx.capture_actions(|cx| {
+            for btn in self.mp_buttons.iter_mut() {
+                btn.handle_event(cx, event, scope);
+            }
+            for cb in self.mp_checkboxes.iter_mut() {
+                cb.handle_event(cx, event, scope);
+            }
+            for sl in self.mp_sliders.iter_mut() {
+                sl.handle_event(cx, event, scope);
+            }
+            for ti in self.mp_text_inputs.iter_mut() {
+                ti.handle_event(cx, event, scope);
+            }
+        });
 
-                // Emit data model change
-                if let Some((_, binding_path, _)) = self.text_field_data.get(focused_idx) {
-                    if let Some(path) = binding_path {
+        let mut needs_redraw = false;
+
+        // Check button actions
+        for (idx, btn) in self.mp_buttons.iter().enumerate() {
+            if btn.clicked(&actions) {
+                if let Some((component_id, action_def, btn_scope)) = self.button_meta.get(idx) {
+                    if let Some(action_def) = action_def {
+                        if let Some(processor) = &self.processor {
+                            let user_action = processor.create_action(
+                                &surface_id,
+                                component_id,
+                                action_def,
+                                btn_scope.as_deref(),
+                            );
+                            cx.widget_action(
+                                self.widget_uid(),
+                                &scope.path,
+                                A2uiSurfaceAction::UserAction(user_action),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check checkbox actions
+        for (idx, cb) in self.mp_checkboxes.iter().enumerate() {
+            if let Some(action) = actions.find_widget_action(cb.widget_uid()) {
+                if let MpCheckboxAction::Changed(new_value) = action.cast::<MpCheckboxAction>() {
+                    if let Some((_, binding_path, _)) = self.checkbox_meta.get(idx) {
+                        if let Some(path) = binding_path {
+                            cx.widget_action(
+                                self.widget_uid(),
+                                &scope.path,
+                                A2uiSurfaceAction::DataModelChanged {
+                                    surface_id: surface_id.clone(),
+                                    path: path.clone(),
+                                    value: serde_json::Value::Bool(new_value),
+                                },
+                            );
+                            needs_redraw = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check slider actions
+        for (idx, sl) in self.mp_sliders.iter().enumerate() {
+            if let Some(action) = actions.find_widget_action(sl.widget_uid()) {
+                if let MpSliderAction::Changed(slider_value) = action.cast::<MpSliderAction>() {
+                    if let Some((_, binding_path, _, _, _)) = self.slider_meta.get(idx) {
+                        if let Some(path) = binding_path {
+                            let value = match slider_value {
+                                crate::widgets::slider::SliderValue::Single(v) => serde_json::json!(v),
+                                crate::widgets::slider::SliderValue::Range(start, end) => {
+                                    serde_json::json!({"start": start, "end": end})
+                                }
+                            };
+                            cx.widget_action(
+                                self.widget_uid(),
+                                &scope.path,
+                                A2uiSurfaceAction::DataModelChanged {
+                                    surface_id: surface_id.clone(),
+                                    path: path.clone(),
+                                    value,
+                                },
+                            );
+                            needs_redraw = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check text input actions
+        for (idx, ti) in self.mp_text_inputs.iter().enumerate() {
+            if let Some(action) = actions.find_widget_action(ti.widget_uid()) {
+                if let TextInputAction::Changed(new_text) = action.cast::<TextInputAction>() {
+                    if let Some((_, binding_path, _)) = self.text_input_meta.get(idx) {
+                        if let Some(path) = binding_path {
+                            cx.widget_action(
+                                self.widget_uid(),
+                                &scope.path,
+                                A2uiSurfaceAction::DataModelChanged {
+                                    surface_id: surface_id.clone(),
+                                    path: path.clone(),
+                                    value: serde_json::Value::String(new_text),
+                                },
+                            );
+                            needs_redraw = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Handle calendar cell events (manual Area hit testing)
+        for (idx, area) in self.calendar_cell_areas.iter().enumerate() {
+            match event.hits(cx, *area) {
+                Hit::FingerHoverIn(_) => {
+                    if self.calendar_hovered_idx != Some(idx) {
+                        self.calendar_hovered_idx = Some(idx);
+                        cx.set_cursor(MouseCursor::Hand);
+                        needs_redraw = true;
+                    }
+                }
+                Hit::FingerHoverOut(_) => {
+                    if self.calendar_hovered_idx == Some(idx) {
+                        self.calendar_hovered_idx = None;
+                        cx.set_cursor(MouseCursor::Default);
+                        needs_redraw = true;
+                    }
+                }
+                Hit::FingerDown(_) => {
+                    if let Some(&(row, col)) = self.calendar_cell_meta.get(idx) {
+                        self.calendar_selected_cell = Some((row, col));
+
+                        // Emit userAction with row/col context
+                        let user_action = crate::a2ui::message::UserAction {
+                            surface_id: surface_id.clone(),
+                            action: crate::a2ui::message::UserActionPayload {
+                                name: "calendarCellClick".to_string(),
+                                context: {
+                                    let mut ctx = std::collections::HashMap::new();
+                                    ctx.insert("row".to_string(), serde_json::json!(row));
+                                    ctx.insert("col".to_string(), serde_json::json!(col));
+                                    ctx
+                                },
+                            },
+                            component_id: Some("calendar-view".to_string()),
+                        };
                         cx.widget_action(
                             self.widget_uid(),
                             &scope.path,
-                            A2uiSurfaceAction::DataModelChanged {
-                                surface_id: surface_id.clone(),
-                                path: path.clone(),
-                                value: serde_json::Value::String(self.text_input_buffer.clone()),
-                            },
+                            A2uiSurfaceAction::UserAction(user_action),
                         );
-                    }
-                }
-            }
-
-            if let Event::KeyDown(ke) = event {
-                match ke.key_code {
-                    KeyCode::Backspace => {
-                        if self.cursor_pos > 0 {
-                            self.cursor_pos -= 1;
-                            self.text_input_buffer.remove(self.cursor_pos);
-                            needs_redraw = true;
-
-                            // Emit data model change
-                            if let Some((_, binding_path, _)) = self.text_field_data.get(focused_idx) {
-                                if let Some(path) = binding_path {
-                                    cx.widget_action(
-                                        self.widget_uid(),
-                                        &scope.path,
-                                        A2uiSurfaceAction::DataModelChanged {
-                                            surface_id: surface_id.clone(),
-                                            path: path.clone(),
-                                            value: serde_json::Value::String(self.text_input_buffer.clone()),
-                                        },
-                                    );
-                                }
-                            }
-                        }
-                    }
-                    KeyCode::Delete => {
-                        if self.cursor_pos < self.text_input_buffer.len() {
-                            self.text_input_buffer.remove(self.cursor_pos);
-                            needs_redraw = true;
-
-                            if let Some((_, binding_path, _)) = self.text_field_data.get(focused_idx) {
-                                if let Some(path) = binding_path {
-                                    cx.widget_action(
-                                        self.widget_uid(),
-                                        &scope.path,
-                                        A2uiSurfaceAction::DataModelChanged {
-                                            surface_id: surface_id.clone(),
-                                            path: path.clone(),
-                                            value: serde_json::Value::String(self.text_input_buffer.clone()),
-                                        },
-                                    );
-                                }
-                            }
-                        }
-                    }
-                    KeyCode::ArrowLeft => {
-                        if self.cursor_pos > 0 {
-                            self.cursor_pos -= 1;
-                            needs_redraw = true;
-                        }
-                    }
-                    KeyCode::ArrowRight => {
-                        if self.cursor_pos < self.text_input_buffer.len() {
-                            self.cursor_pos += 1;
-                            needs_redraw = true;
-                        }
-                    }
-                    KeyCode::Escape => {
-                        self.focused_text_field_idx = None;
-                        needs_redraw = true;
-                    }
-                    _ => {}
-                }
-            }
-        }
-
-        // Handle button events
-        for (idx, area) in self.button_areas.iter().enumerate() {
-            match event.hits(cx, *area) {
-                Hit::FingerHoverIn(_) => {
-                    if self.hovered_button_idx != Some(idx) {
-                        self.hovered_button_idx = Some(idx);
-                        cx.set_cursor(MouseCursor::Hand);
-                        needs_redraw = true;
-                    }
-                }
-                Hit::FingerHoverOut(_) => {
-                    if self.hovered_button_idx == Some(idx) {
-                        self.hovered_button_idx = None;
-                        cx.set_cursor(MouseCursor::Default);
-                        needs_redraw = true;
-                    }
-                }
-                Hit::FingerDown(_) => {
-                    self.pressed_button_idx = Some(idx);
-                    self.hovered_button_idx = Some(idx);
-                    needs_redraw = true;
-                }
-                Hit::FingerUp(fe) => {
-                    if self.pressed_button_idx == Some(idx) {
-                        self.pressed_button_idx = None;
-                        needs_redraw = true;
-
-                        // Check if released over this button (click confirmed)
-                        if fe.is_over {
-                            if let Some((component_id, action_def, btn_scope)) =
-                                self.button_data.get(idx)
-                            {
-                                if let Some(action_def) = action_def {
-                                    // Create resolved UserAction with data model values
-                                    if let Some(processor) = &self.processor {
-                                        let user_action = processor.create_action(
-                                            &surface_id,
-                                            component_id,
-                                            action_def,
-                                            btn_scope.as_deref(),
-                                        );
-                                        // Emit widget action for app layer to handle
-                                        cx.widget_action(
-                                            self.widget_uid(),
-                                            &scope.path,
-                                            A2uiSurfaceAction::UserAction(user_action),
-                                        );
-                                    }
-                                }
-                            }
-                            self.hovered_button_idx = Some(idx);
-                        } else {
-                            self.hovered_button_idx = None;
-                            cx.set_cursor(MouseCursor::Default);
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        // Handle text field events
-        for (idx, area) in self.text_field_areas.iter().enumerate() {
-            match event.hits(cx, *area) {
-                Hit::FingerDown(_) => {
-                    // Focus this text field
-                    self.focused_text_field_idx = Some(idx);
-                    if let Some((_, _, current_value)) = self.text_field_data.get(idx) {
-                        self.text_input_buffer = current_value.clone();
-                        self.cursor_pos = self.text_input_buffer.len();
-                    }
-                    cx.set_key_focus(self.area);
-                    needs_redraw = true;
-                }
-                _ => {}
-            }
-        }
-
-        // Handle checkbox events
-        for (idx, area) in self.checkbox_areas.iter().enumerate() {
-            match event.hits(cx, *area) {
-                Hit::FingerHoverIn(_) => {
-                    if self.hovered_checkbox_idx != Some(idx) {
-                        self.hovered_checkbox_idx = Some(idx);
-                        cx.set_cursor(MouseCursor::Hand);
-                        needs_redraw = true;
-                    }
-                }
-                Hit::FingerHoverOut(_) => {
-                    if self.hovered_checkbox_idx == Some(idx) {
-                        self.hovered_checkbox_idx = None;
-                        cx.set_cursor(MouseCursor::Default);
-                        needs_redraw = true;
-                    }
-                }
-                Hit::FingerDown(_) => {
-                    // Must handle FingerDown to receive FingerUp
-                    self.hovered_checkbox_idx = Some(idx);
-                    needs_redraw = true;
-                }
-                Hit::FingerUp(fe) => {
-                    if fe.is_over {
-                        // Toggle checkbox value
-                        if let Some((_, binding_path, current_value)) =
-                            self.checkbox_data.get(idx).cloned()
-                        {
-                            let new_value = !current_value;
-                            if let Some(path) = binding_path {
-                                cx.widget_action(
-                                    self.widget_uid(),
-                                    &scope.path,
-                                    A2uiSurfaceAction::DataModelChanged {
-                                        surface_id: surface_id.clone(),
-                                        path,
-                                        value: serde_json::Value::Bool(new_value),
-                                    },
-                                );
-                            }
-                        }
                         needs_redraw = true;
                     }
                 }
@@ -223,7 +167,7 @@ impl Widget for A2uiSurface {
             }
         }
 
-        // Handle audio player events
+        // Handle audio player events (still uses manual Area hit testing)
         for (idx, area) in self.audio_player_areas.iter().enumerate() {
             match event.hits(cx, *area) {
                 Hit::FingerHoverIn(_) => {
@@ -241,11 +185,8 @@ impl Widget for A2uiSurface {
                     }
                 }
                 Hit::FingerDown(_) => {
-                    log!("[AudioPlayer] Click idx={}", idx);
                     self.hovered_audio_player_idx = Some(idx);
-                    // Trigger play immediately on FingerDown
                     if let Some((component_id, url, title)) = self.audio_player_data.get(idx).cloned() {
-                        log!("[AudioPlayer] Emitting PlayAudio: {} - {}", title, url);
                         cx.widget_action(
                             self.widget_uid(),
                             &scope.path,
@@ -262,83 +203,6 @@ impl Widget for A2uiSurface {
             }
         }
 
-        // Handle slider events
-        for (idx, area) in self.slider_areas.iter().enumerate() {
-            match event.hits(cx, *area) {
-                Hit::FingerHoverIn(_) => {
-                    if self.hovered_slider_idx != Some(idx) {
-                        self.hovered_slider_idx = Some(idx);
-                        cx.set_cursor(MouseCursor::Hand);
-                        needs_redraw = true;
-                    }
-                }
-                Hit::FingerHoverOut(_) => {
-                    if self.hovered_slider_idx == Some(idx) && self.dragging_slider_idx != Some(idx)
-                    {
-                        self.hovered_slider_idx = None;
-                        cx.set_cursor(MouseCursor::Default);
-                        needs_redraw = true;
-                    }
-                }
-                Hit::FingerDown(fe) => {
-                    self.dragging_slider_idx = Some(idx);
-                    self.hovered_slider_idx = Some(idx);
-
-                    // Calculate value from position
-                    if let Some((_, binding_path, min, max, _)) = self.slider_data.get(idx).cloned()
-                    {
-                        let rect = area.rect(cx);
-                        let rel_x = (fe.abs.x - rect.pos.x) / rect.size.x;
-                        let new_value = min + (max - min) * rel_x.clamp(0.0, 1.0);
-
-                        if let Some(path) = binding_path {
-                            cx.widget_action(
-                                self.widget_uid(),
-                                &scope.path,
-                                A2uiSurfaceAction::DataModelChanged {
-                                    surface_id: surface_id.clone(),
-                                    path,
-                                    value: serde_json::json!(new_value),
-                                },
-                            );
-                        }
-                    }
-                    needs_redraw = true;
-                }
-                Hit::FingerMove(fe) => {
-                    if self.dragging_slider_idx == Some(idx) {
-                        if let Some((_, binding_path, min, max, _)) =
-                            self.slider_data.get(idx).cloned()
-                        {
-                            let rect = area.rect(cx);
-                            let rel_x = (fe.abs.x - rect.pos.x) / rect.size.x;
-                            let new_value = min + (max - min) * rel_x.clamp(0.0, 1.0);
-
-                            if let Some(path) = binding_path {
-                                cx.widget_action(
-                                    self.widget_uid(),
-                                    &scope.path,
-                                    A2uiSurfaceAction::DataModelChanged {
-                                        surface_id: surface_id.clone(),
-                                        path,
-                                        value: serde_json::json!(new_value),
-                                    },
-                                );
-                            }
-                        }
-                        needs_redraw = true;
-                    }
-                }
-                Hit::FingerUp(_) => {
-                    if self.dragging_slider_idx == Some(idx) {
-                        self.dragging_slider_idx = None;
-                        needs_redraw = true;
-                    }
-                }
-                _ => {}
-            }
-        }
-
         if needs_redraw {
             self.redraw(cx);
         }
@@ -348,13 +212,16 @@ impl Widget for A2uiSurface {
         // Load image textures if not loaded yet
         self.load_image_textures(cx);
 
-        // Clear component data from previous frame
-        // Keep areas - they will be updated in render_* to maintain event tracking
-        self.button_data.clear();
-        self.text_field_data.clear();
-        self.checkbox_data.clear();
-        self.slider_data.clear();
+        // Clear metadata from previous frame (pool instances are kept for animation state)
+        self.button_meta.clear();
+        self.checkbox_meta.clear();
+        self.slider_meta.clear();
+        self.text_input_meta.clear();
         self.audio_player_data.clear();
+        self.calendar_cell_areas.clear();
+        self.calendar_cell_meta.clear();
+        self.label_count = 0;
+        self.inside_card = false;
 
         self.draw_bg.begin(cx, walk, self.layout);
 
@@ -364,7 +231,6 @@ impl Widget for A2uiSurface {
             let surface_opt = processor.get_surface(&surface_id);
             let data_model_opt = processor.get_data_model(&surface_id);
 
-            // Debug: Log what we found
             if surface_opt.is_none() {
                 log!("[draw_walk] No surface found for id: {}", surface_id);
             }
@@ -391,30 +257,24 @@ impl Widget for A2uiSurface {
             }
         }
 
-        // Trim areas if we have fewer components this frame
-        let current_button_count = self.button_data.len();
-        if current_button_count < self.button_areas.len() {
-            self.button_areas.truncate(current_button_count);
-        }
+        // Trim widget pools to match this frame's usage
+        let button_count = self.button_meta.len();
+        self.mp_buttons.truncate(button_count);
 
-        let current_text_field_count = self.text_field_data.len();
-        if current_text_field_count < self.text_field_areas.len() {
-            self.text_field_areas.truncate(current_text_field_count);
-        }
+        let checkbox_count = self.checkbox_meta.len();
+        self.mp_checkboxes.truncate(checkbox_count);
 
-        let current_checkbox_count = self.checkbox_data.len();
-        if current_checkbox_count < self.checkbox_areas.len() {
-            self.checkbox_areas.truncate(current_checkbox_count);
-        }
+        let slider_count = self.slider_meta.len();
+        self.mp_sliders.truncate(slider_count);
 
-        let current_slider_count = self.slider_data.len();
-        if current_slider_count < self.slider_areas.len() {
-            self.slider_areas.truncate(current_slider_count);
-        }
+        self.mp_labels.truncate(self.label_count);
 
-        let current_audio_player_count = self.audio_player_data.len();
-        if current_audio_player_count < self.audio_player_areas.len() {
-            self.audio_player_areas.truncate(current_audio_player_count);
+        let text_input_count = self.text_input_meta.len();
+        self.mp_text_inputs.truncate(text_input_count);
+
+        let audio_player_count = self.audio_player_data.len();
+        if audio_player_count < self.audio_player_areas.len() {
+            self.audio_player_areas.truncate(audio_player_count);
         }
 
         self.draw_bg.end(cx);

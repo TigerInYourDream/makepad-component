@@ -164,6 +164,7 @@ pub enum ComponentType {
 
     // Visualization components
     Chart(ChartComponent),
+    Calendar(CalendarComponent),
     // Media components
     AudioPlayer(AudioPlayerComponent),
 }
@@ -572,6 +573,49 @@ pub enum ChartType {
     Surface3d,
     Scatter3d,
     Line3d,
+}
+
+// Calendar Components
+// ============================================================================
+
+/// Calendar/grid visualization component for weekly planners, schedules, etc.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarComponent {
+    /// Calendar title
+    #[serde(default)]
+    pub title: Option<StringValue>,
+
+    /// Number of columns (default 7 for weekly view)
+    #[serde(default = "default_calendar_columns")]
+    pub columns: usize,
+
+    /// Column header labels (e.g., ["Day 1", "Day 2", ...])
+    #[serde(default)]
+    pub column_headers: Vec<String>,
+
+    /// Column subtitle labels (e.g., ["Shibuya", "Asakusa", ...])
+    #[serde(default)]
+    pub column_subtitles: Vec<String>,
+
+    /// Row labels (e.g., ["", "🌅 AM", "☀️ PM", "🌙 Eve", "💰"])
+    #[serde(default)]
+    pub row_labels: Vec<String>,
+
+    /// Row color hints: "header", "morning", "afternoon", "evening", "budget"
+    #[serde(default)]
+    pub row_color_hints: Vec<String>,
+
+    /// Path to 2D cell data in DataModel
+    pub cells: StringValue,
+
+    /// Footer text (e.g., grand total)
+    #[serde(default)]
+    pub footer: Option<StringValue>,
+}
+
+fn default_calendar_columns() -> usize {
+    7
 }
 
 // Media Components
