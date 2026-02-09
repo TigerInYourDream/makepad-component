@@ -20,6 +20,11 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+            grid_color: #40404d80,
+        }
     }
 }
 
@@ -88,6 +93,7 @@ pub struct LinePlotDual {
     #[live] draw_fill: DrawPlotFill,
     #[live] draw_point: DrawPlotPoint,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] x_label: String,
     #[rust] y_label: String,
@@ -180,7 +186,7 @@ impl Widget for LinePlotDual {
 
                 // Draw grid
                 if self.show_grid {
-                    self.draw_line.color = vec4(0.9, 0.9, 0.9, 1.0);
+                    self.draw_line.color = self.theme.grid_color;
                     for i in 0..=5 {
                         let t = i as f64 / 5.0;
                         let x = plot_rect.pos.x + t * plot_rect.size.x;
@@ -191,7 +197,7 @@ impl Widget for LinePlotDual {
                 }
 
                 // Draw axes
-                self.draw_line.color = vec4(0.2, 0.2, 0.2, 1.0);
+                self.draw_line.color = self.theme.label_color;
                 self.draw_line.draw_line(cx, dvec2(plot_rect.pos.x, plot_rect.pos.y + plot_rect.size.y),
                     dvec2(plot_rect.pos.x + plot_rect.size.x, plot_rect.pos.y + plot_rect.size.y), 1.5);
                 self.draw_line.draw_line(cx, dvec2(plot_rect.pos.x, plot_rect.pos.y),

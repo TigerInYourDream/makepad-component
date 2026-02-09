@@ -13,12 +13,20 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            grid_color: #40404d80,
+        }
     }
 
     pub BoxPlotChart = {{BoxPlotChart}} {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            grid_color: #40404d80,
+        }
     }
 }
 
@@ -35,6 +43,9 @@ pub struct HistogramChart {
     #[deref]
     #[live]
     view: View,
+
+    #[live]
+    theme: ChartTheme,
 
     #[live]
     draw_bar: DrawPlotBar,
@@ -200,7 +211,7 @@ impl HistogramChart {
             return;
         }
 
-        self.draw_line.color = vec4(0.9, 0.9, 0.9, 1.0);
+        self.draw_line.color = self.theme.grid_color;
         let (_, (y_min, y_max)) = self.get_ranges();
 
         let y_ticks = self.generate_ticks(y_min, y_max, 5);
@@ -212,7 +223,7 @@ impl HistogramChart {
     }
 
     fn draw_axes(&mut self, cx: &mut Cx2d) {
-        self.draw_line.color = vec4(0.3, 0.3, 0.3, 1.0);
+        self.draw_line.color = self.theme.label_color;
 
         let x1 = dvec2(self.plot_area.left, self.plot_area.bottom);
         let x2 = dvec2(self.plot_area.right, self.plot_area.bottom);
@@ -240,7 +251,7 @@ impl HistogramChart {
     }
 
     fn draw_labels(&mut self, cx: &mut Cx2d) {
-        self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+        self.label.set_color(self.theme.label_color);
 
         let ((x_min, x_max), (y_min, y_max)) = self.get_ranges();
 
@@ -409,6 +420,9 @@ pub struct BoxPlotChart {
     view: View,
 
     #[live]
+    theme: ChartTheme,
+
+    #[live]
     draw_bar: DrawPlotBar,
 
     #[live]
@@ -526,7 +540,7 @@ impl BoxPlotChart {
             return;
         }
 
-        self.draw_line.color = vec4(0.9, 0.9, 0.9, 1.0);
+        self.draw_line.color = self.theme.grid_color;
         let (y_min, y_max) = self.get_y_range();
 
         let y_ticks = self.generate_ticks(y_min, y_max, 5);
@@ -539,7 +553,7 @@ impl BoxPlotChart {
     }
 
     fn draw_axes(&mut self, cx: &mut Cx2d) {
-        self.draw_line.color = vec4(0.3, 0.3, 0.3, 1.0);
+        self.draw_line.color = self.theme.label_color;
 
         let x1 = dvec2(self.plot_area.left, self.plot_area.bottom);
         let x2 = dvec2(self.plot_area.right, self.plot_area.bottom);
@@ -592,7 +606,7 @@ impl BoxPlotChart {
             );
 
             // Draw whiskers
-            self.draw_line.color = vec4(0.3, 0.3, 0.3, 1.0);
+            self.draw_line.color = self.theme.label_color;
 
             // Lower whisker
             self.draw_line.draw_line(
@@ -636,7 +650,7 @@ impl BoxPlotChart {
     }
 
     fn draw_labels(&mut self, cx: &mut Cx2d) {
-        self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+        self.label.set_color(self.theme.label_color);
 
         let n = self.items.len();
         let band_width = self.plot_area.width() / n as f64;

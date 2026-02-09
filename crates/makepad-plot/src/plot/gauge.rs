@@ -13,12 +13,18 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+        }
     }
 
     pub FunnelChart = {{FunnelChart}} {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+        }
     }
 }
 
@@ -28,6 +34,7 @@ pub struct GaugeChart {
     #[live] draw_fill: DrawPlotFill,
     #[live] draw_line: DrawPlotLine,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] value: f64,
     #[rust] min_value: f64,
@@ -117,7 +124,7 @@ impl Widget for GaugeChart {
 
             // Draw background arc
             let num_segments = 60;
-            self.draw_line.color = vec4(0.85, 0.85, 0.85, 1.0);
+            self.draw_line.color = self.theme.label_color;
             for i in 0..num_segments {
                 let t1 = i as f64 / num_segments as f64;
                 let t2 = (i + 1) as f64 / num_segments as f64;
@@ -152,11 +159,11 @@ impl Widget for GaugeChart {
                 center.x + needle_length * value_angle.cos(),
                 center.y + needle_length * value_angle.sin()
             );
-            self.draw_line.color = vec4(0.2, 0.2, 0.2, 1.0);
+            self.draw_line.color = self.theme.label_color;
             self.draw_line.draw_line(cx, center, needle_end, 3.0);
 
             // Draw center circle
-            self.draw_fill.color = vec4(0.3, 0.3, 0.3, 1.0);
+            self.draw_fill.color = self.theme.label_color;
             self.draw_fill.draw_abs(cx, Rect {
                 pos: dvec2(center.x - 8.0, center.y - 8.0),
                 size: dvec2(16.0, 16.0),
@@ -240,6 +247,7 @@ pub struct FunnelChart {
     #[live] draw_fill: DrawPlotFill,
     #[live] draw_line: DrawPlotLine,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] stages: Vec<FunnelStage>,
     #[rust] show_percentages: bool,

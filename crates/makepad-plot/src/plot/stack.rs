@@ -13,12 +13,22 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+            grid_color: #40404d80,
+        }
     }
 
     pub Streamgraph = {{Streamgraph}} {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+            grid_color: #40404d80,
+        }
     }
 }
 
@@ -102,6 +112,7 @@ pub struct Stackplot {
     #[walk] walk: Walk,
     #[layout] layout: Layout,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
 
     #[rust] series: Vec<StackSeries>,
     #[rust] x_labels: Vec<String>,
@@ -396,6 +407,7 @@ pub struct Streamgraph {
     #[walk] walk: Walk,
     #[layout] layout: Layout,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
 
     #[rust] series: Vec<StreamSeries>,
     #[rust] labels: Vec<String>,

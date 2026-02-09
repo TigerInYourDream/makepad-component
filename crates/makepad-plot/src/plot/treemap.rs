@@ -13,6 +13,9 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+        }
     }
 }
 
@@ -43,6 +46,7 @@ pub struct Treemap {
     #[live] draw_fill: DrawPlotFill,
     #[live] draw_line: DrawPlotLine,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] nodes: Vec<TreemapNode>,
     #[rust] show_labels: bool,
@@ -137,7 +141,7 @@ impl Widget for Treemap {
 
             // Draw title
             if !self.title.is_empty() {
-                self.label.draw_text.color = vec4(0.2, 0.2, 0.2, 1.0);
+                self.label.draw_text.color = self.theme.label_color;
                 self.label.draw_at(cx, dvec2(rect.pos.x + rect.size.x / 2.0, rect.pos.y + 15.0), &self.title, TextAnchor::TopCenter);
             }
         }

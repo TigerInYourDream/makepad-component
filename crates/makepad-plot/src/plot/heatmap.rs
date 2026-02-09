@@ -13,12 +13,18 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+        }
     }
 
     pub Heatmap = {{Heatmap}} {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+        }
     }
 }
 
@@ -36,6 +42,9 @@ pub struct HeatmapChart {
 
     #[live]
     label: PlotLabel,
+
+    #[live]
+    theme: ChartTheme,
 
     #[rust]
     data: Vec<Vec<f64>>,
@@ -209,7 +218,7 @@ impl HeatmapChart {
     }
 
     fn draw_labels(&mut self, cx: &mut Cx2d) {
-        self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+        self.label.set_color(self.theme.label_color);
 
         let rows = self.data.len();
         let cols = if rows > 0 { self.data[0].len() } else { 0 };
@@ -266,7 +275,7 @@ impl HeatmapChart {
 
         // Draw colorbar labels
         let (vmin, vmax) = self.get_value_range();
-        self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+        self.label.set_color(self.theme.label_color);
 
         let label_max = format!("{:.1}", vmax);
         let label_min = format!("{:.1}", vmin);
@@ -338,6 +347,7 @@ pub struct Heatmap {
     #[deref] #[live] view: View,
     #[live] draw_fill: DrawPlotFill,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] data: Vec<Vec<f64>>,
     #[rust] x_labels: Vec<String>,
@@ -449,7 +459,7 @@ impl Widget for Heatmap {
                 }
 
                 // Draw X labels
-                self.label.draw_text.color = vec4(0.3, 0.3, 0.3, 1.0);
+                self.label.draw_text.color = self.theme.label_color;
                 for (i, label) in self.x_labels.iter().enumerate() {
                     if i < cols {
                         let x = plot_left + (i as f64 + 0.5) * cell_width;
@@ -468,7 +478,7 @@ impl Widget for Heatmap {
 
             // Draw title
             if !self.title.is_empty() {
-                self.label.draw_text.color = vec4(0.2, 0.2, 0.2, 1.0);
+                self.label.draw_text.color = self.theme.label_color;
                 self.label.draw_at(cx, dvec2(rect.pos.x + rect.size.x / 2.0, rect.pos.y + 15.0), &self.title, TextAnchor::TopCenter);
             }
         }

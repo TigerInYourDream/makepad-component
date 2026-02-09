@@ -13,6 +13,9 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+        }
     }
 }
 
@@ -165,6 +168,7 @@ pub struct Surface3D {
     #[live] draw_fill: DrawPlotFill,
     #[live] draw_line: DrawPlotLine,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     // Legacy single-chart fields (used when no chart_id is provided)
     #[rust] title: String,
     #[rust] z_data: Vec<Vec<f64>>,

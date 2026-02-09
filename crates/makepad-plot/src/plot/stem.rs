@@ -13,12 +13,21 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+            grid_color: #40404d80,
+        }
     }
 
     pub ViolinPlot = {{ViolinPlot}} {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+        }
     }
 }
 
@@ -36,6 +45,9 @@ pub struct StemPlot {
 
     #[live]
     label: PlotLabel,
+
+    #[live]
+    theme: ChartTheme,
 
     #[rust]
     series: Vec<Series>,
@@ -205,7 +217,7 @@ impl StemPlot {
             return;
         }
 
-        self.draw_line.color = vec4(0.9, 0.9, 0.9, 1.0);
+        self.draw_line.color = self.theme.grid_color;
 
         // Horizontal grid lines
         let y_step = (self.y_range.1 - self.y_range.0) / 5.0;
@@ -218,7 +230,7 @@ impl StemPlot {
     }
 
     fn draw_axes(&mut self, cx: &mut Cx2d) {
-        self.draw_line.color = vec4(0.3, 0.3, 0.3, 1.0);
+        self.draw_line.color = self.theme.axis_color;
 
         // X axis
         let x1 = dvec2(self.plot_area.left, self.plot_area.bottom);
@@ -232,7 +244,7 @@ impl StemPlot {
 
         // Baseline (if different from y_range.0)
         if self.baseline > self.y_range.0 && self.baseline < self.y_range.1 {
-            self.draw_line.color = vec4(0.5, 0.5, 0.5, 0.5);
+            self.draw_line.color = self.theme.grid_color;
             let p1 = self.data_to_pixel(self.x_range.0, self.baseline);
             let p2 = self.data_to_pixel(self.x_range.1, self.baseline);
             self.draw_line.draw_line_styled(cx, p1, p2, 1.0, LineStyle::Dashed, 0.0);
@@ -269,7 +281,7 @@ impl StemPlot {
     }
 
     fn draw_labels(&mut self, cx: &mut Cx2d) {
-        self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+        self.label.set_color(self.theme.label_color);
 
         // X axis tick labels
         let x_step = (self.x_range.1 - self.x_range.0) / 5.0;
@@ -310,7 +322,7 @@ impl StemPlot {
             LegendPosition::None => return,
         };
 
-        self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+        self.label.set_color(self.theme.label_color);
 
         for (idx, series) in self.series.iter().enumerate() {
             if series.label.is_empty() {
@@ -412,6 +424,7 @@ pub struct ViolinPlot {
     #[live] draw_line: DrawPlotLine,
     #[live] draw_point: DrawPlotPoint,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] items: Vec<ViolinItem>,
     #[rust] show_box: bool,
@@ -481,7 +494,7 @@ impl ViolinPlot {
         let std = (all.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / all.len() as f64).sqrt();
         let bw = if self.bandwidth > 0.0 { self.bandwidth } else { 1.06 * std * (all.len() as f64).powf(-0.2) };
 
-        self.draw_line.color = vec4(0.3, 0.3, 0.3, 1.0);
+        self.draw_line.color = self.theme.axis_color;
         self.draw_line.draw_line(cx, dvec2(self.plot_area.left, self.plot_area.bottom), dvec2(self.plot_area.right, self.plot_area.bottom), 1.0);
         self.draw_line.draw_line(cx, dvec2(self.plot_area.left, self.plot_area.bottom), dvec2(self.plot_area.left, self.plot_area.top), 1.0);
 
@@ -520,7 +533,7 @@ impl ViolinPlot {
                 let py_m = self.plot_area.bottom - (med - y_min) / (y_max - y_min) * self.plot_area.height();
                 let py_q3 = self.plot_area.bottom - (q3 - y_min) / (y_max - y_min) * self.plot_area.height();
                 let bw = max_w * 0.15;
-                self.draw_fill.color = vec4(0.3, 0.3, 0.3, 0.8);
+                self.draw_fill.color = vec4(self.theme.label_color.x, self.theme.label_color.y, self.theme.label_color.z, 0.8);
                 self.draw_fill.draw_abs(cx, Rect { pos: dvec2(x_c - bw, py_q3), size: dvec2(bw * 2.0, py_q1 - py_q3) });
                 self.draw_line.color = vec4(1.0, 1.0, 1.0, 1.0);
                 self.draw_line.draw_line(cx, dvec2(x_c - bw, py_m), dvec2(x_c + bw, py_m), 2.0);
@@ -529,7 +542,7 @@ impl ViolinPlot {
     }
 
     fn draw_labels(&mut self, cx: &mut Cx2d) {
-        self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+        self.label.set_color(self.theme.label_color);
         if !self.title.is_empty() {
             self.label.draw_at(cx, dvec2((self.plot_area.left + self.plot_area.right) / 2.0, self.plot_area.top - 15.0), &self.title, TextAnchor::Center);
         }

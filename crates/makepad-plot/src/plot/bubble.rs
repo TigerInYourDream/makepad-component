@@ -13,6 +13,10 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            grid_color: #40404d80,
+        }
     }
 }
 
@@ -74,6 +78,7 @@ pub struct BubbleChart {
     #[live] draw_line: DrawPlotLine,
     #[live] draw_bubble: DrawPlotPointGradient,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] series: Vec<BubbleSeries>,
     #[rust] x_label: String,
@@ -181,7 +186,7 @@ impl Widget for BubbleChart {
 
             // Draw grid
             if self.show_grid {
-                self.draw_line.color = vec4(0.9, 0.9, 0.9, 1.0);
+                self.draw_line.color = self.theme.grid_color;
                 for i in 0..=5 {
                     let t = i as f64 / 5.0;
                     let x = plot_left + t * plot_width;
@@ -192,12 +197,12 @@ impl Widget for BubbleChart {
             }
 
             // Draw axes
-            self.draw_line.color = vec4(0.3, 0.3, 0.3, 1.0);
+            self.draw_line.color = self.theme.label_color;
             self.draw_line.draw_line(cx, dvec2(plot_left, plot_bottom), dvec2(plot_right, plot_bottom), 1.5);
             self.draw_line.draw_line(cx, dvec2(plot_left, plot_top), dvec2(plot_left, plot_bottom), 1.5);
 
             // Draw axis tick labels
-            self.label.draw_text.color = vec4(0.3, 0.3, 0.3, 1.0);
+            self.label.draw_text.color = self.theme.label_color;
             for i in 0..=5 {
                 let t = i as f64 / 5.0;
                 let x_val = x_min + t * x_range;
@@ -251,7 +256,7 @@ impl Widget for BubbleChart {
 
                     // Draw label if present
                     if let Some(label) = &point.label {
-                        self.label.draw_text.color = vec4(0.2, 0.2, 0.2, 1.0);
+                        self.label.draw_text.color = self.theme.label_color;
                         self.label.draw_at(cx, dvec2(px, py - radius - 5.0), label, TextAnchor::BottomCenter);
                     }
                 }
@@ -259,7 +264,7 @@ impl Widget for BubbleChart {
 
             // Draw title
             if !self.title.is_empty() {
-                self.label.draw_text.color = vec4(0.2, 0.2, 0.2, 1.0);
+                self.label.draw_text.color = self.theme.label_color;
                 self.label.draw_at(cx, dvec2(rect.pos.x + rect.size.x / 2.0, rect.pos.y + 15.0), &self.title, TextAnchor::TopCenter);
             }
 

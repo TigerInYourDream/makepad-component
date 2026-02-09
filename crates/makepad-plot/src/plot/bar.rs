@@ -13,6 +13,11 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+            grid_color: #40404d80,
+        }
     }
 }
 
@@ -49,6 +54,9 @@ pub struct BarPlot {
 
     #[live]
     label: PlotLabel,
+
+    #[live]
+    theme: ChartTheme,
 
     #[rust]
     categories: Vec<String>,
@@ -205,7 +213,7 @@ impl BarPlot {
     }
 
     fn draw_grid(&mut self, cx: &mut Cx2d) {
-        self.draw_line.color = vec4(0.9, 0.9, 0.9, 1.0);
+        self.draw_line.color = self.theme.grid_color;
 
         let (v_min, v_max) = self.get_value_range();
         let v_ticks = self.generate_ticks(v_min, v_max, 5);
@@ -230,7 +238,7 @@ impl BarPlot {
     }
 
     fn draw_axes(&mut self, cx: &mut Cx2d) {
-        self.draw_line.color = vec4(0.3, 0.3, 0.3, 1.0);
+        self.draw_line.color = self.theme.axis_color;
 
         if self.horizontal {
             // X axis (bottom)
@@ -290,7 +298,7 @@ impl BarPlot {
 
                 // Bar label
                 if self.show_bar_labels {
-                    self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+                    self.label.set_color(self.theme.label_color);
                     let label = format!("{:.1}", value);
                     self.label.draw_at(cx, dvec2(self.plot_area.left + bar_width + 5.0, y_center), &label, TextAnchor::MiddleLeft);
                 }
@@ -315,7 +323,7 @@ impl BarPlot {
 
                 // Bar label
                 if self.show_bar_labels {
-                    self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+                    self.label.set_color(self.theme.label_color);
                     let label = format!("{:.1}", value);
                     self.label.draw_at(cx, dvec2(x_center, bar_top - 5.0), &label, TextAnchor::BottomCenter);
                 }
@@ -445,7 +453,7 @@ impl BarPlot {
     }
 
     fn draw_labels(&mut self, cx: &mut Cx2d) {
-        self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+        self.label.set_color(self.theme.label_color);
 
         let n = self.categories.len().max(self.values.len());
         let (v_min, v_max) = self.get_value_range();

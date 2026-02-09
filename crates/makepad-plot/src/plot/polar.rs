@@ -13,12 +13,20 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+        }
     }
 
     pub RadarChart = {{RadarChart}} {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+            grid_color: #40404d80,
+        }
     }
 }
 
@@ -44,6 +52,7 @@ pub struct PolarPlot {
     #[live] draw_point: DrawPlotPoint,
     #[live] draw_fill: DrawPlotFill,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] series: Vec<PolarSeries>,
     #[rust] r_max: Option<f64>,
@@ -84,7 +93,7 @@ impl PolarPlot {
     }
 
     fn draw_grid(&mut self, cx: &mut Cx2d) {
-        self.draw_line.color = vec4(0.85, 0.85, 0.85, 1.0);
+        self.draw_line.color = self.theme.label_color;
         for i in 1..=5 {
             let r = i as f64 / 5.0 * self.plot_radius;
             for j in 0..64 {
@@ -98,7 +107,7 @@ impl PolarPlot {
             let t = i as f64 * std::f64::consts::PI / 6.0;
             self.draw_line.draw_line(cx, self.plot_center, dvec2(self.plot_center.x + self.plot_radius * t.cos(), self.plot_center.y - self.plot_radius * t.sin()), 1.0);
         }
-        self.draw_line.color = vec4(0.3, 0.3, 0.3, 1.0);
+        self.draw_line.color = self.theme.label_color;
         for j in 0..64 {
             let t1 = j as f64 / 64.0 * 2.0 * std::f64::consts::PI;
             let t2 = (j + 1) as f64 / 64.0 * 2.0 * std::f64::consts::PI;
@@ -127,7 +136,7 @@ impl PolarPlot {
     }
 
     fn draw_labels(&mut self, cx: &mut Cx2d) {
-        self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+        self.label.set_color(self.theme.label_color);
         if !self.title.is_empty() {
             self.label.draw_at(cx, dvec2(self.plot_center.x, self.plot_center.y - self.plot_radius - 20.0), &self.title, TextAnchor::Center);
         }
@@ -188,6 +197,7 @@ pub struct RadarChart {
     #[live] draw_point: DrawPlotPointGradient,
     #[live] draw_line: DrawPlotLine,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] axes: Vec<String>,
     #[rust] series: Vec<RadarSeries>,
@@ -276,7 +286,7 @@ impl Widget for RadarChart {
 
             // Draw grid circles
             if show_grid {
-                self.draw_line.color = vec4(0.8, 0.8, 0.8, 0.5);
+                self.draw_line.color = self.theme.grid_color;
                 for level in 1..=grid_levels {
                     let r = radius * level as f64 / grid_levels as f64;
                     // Draw polygon for this level
@@ -291,7 +301,7 @@ impl Widget for RadarChart {
             }
 
             // Draw axis lines and labels
-            self.draw_line.color = vec4(0.5, 0.5, 0.5, 1.0);
+            self.draw_line.color = self.theme.axis_color;
             for (i, axis_name) in self.axes.iter().enumerate() {
                 let angle = -std::f64::consts::FRAC_PI_2 + i as f64 * angle_step;
                 let end = dvec2(center.x + radius * angle.cos(), center.y + radius * angle.sin());

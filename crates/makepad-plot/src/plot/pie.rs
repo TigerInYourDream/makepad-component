@@ -13,6 +13,11 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            legend_bg_color: #1e1e26d9,
+            legend_border_color: #59596699,
+        }
     }
 
     pub DonutChart = {{DonutChart}} {
@@ -20,6 +25,9 @@ live_design! {
         height: Fill,
         draw_arc: {}
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+        }
     }
 }
 
@@ -60,6 +68,9 @@ pub struct PieChart {
 
     #[live]
     label: PlotLabel,
+
+    #[live]
+    theme: ChartTheme,
 
     #[rust]
     slices: Vec<PieSlice>,
@@ -181,7 +192,7 @@ impl PieChart {
     fn draw_title(&mut self, cx: &mut Cx2d, rect: Rect) {
         if !self.title.is_empty() {
             let center_x = rect.pos.x + rect.size.x / 2.0;
-            self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+            self.label.set_color(self.theme.label_color);
             self.label.draw_at(cx, dvec2(center_x, rect.pos.y + 10.0), &self.title, TextAnchor::TopCenter);
         }
     }
@@ -196,7 +207,12 @@ impl PieChart {
         let marker_size = 10.0;
         let marker_text_gap = 6.0;
         let legend_height = self.slices.len() as f64 * line_height + padding * 2.0;
-        let legend_width = 100.0;
+        // Calculate legend width based on longest label
+        let max_label_len = self.slices.iter()
+            .map(|s| s.label.len())
+            .max()
+            .unwrap_or(0);
+        let legend_width = (padding * 2.0 + marker_size + marker_text_gap + max_label_len as f64 * 7.0).max(100.0);
 
         let (legend_x, legend_y) = match self.legend_position {
             LegendPosition::TopRight => (
@@ -218,14 +234,14 @@ impl PieChart {
             LegendPosition::None => return,
         };
 
-        self.draw_line.color = vec4(0.95, 0.95, 0.95, 0.9);
+        self.draw_line.color = self.theme.legend_bg_color;
         let bg_rect = Rect {
             pos: dvec2(legend_x, legend_y),
             size: dvec2(legend_width, legend_height),
         };
         self.draw_line.draw_abs(cx, bg_rect);
 
-        self.draw_line.color = vec4(0.8, 0.8, 0.8, 1.0);
+        self.draw_line.color = self.theme.legend_border_color;
         self.draw_line.draw_line(cx, dvec2(legend_x, legend_y), dvec2(legend_x + legend_width, legend_y), 1.0);
         self.draw_line.draw_line(cx, dvec2(legend_x, legend_y + legend_height), dvec2(legend_x + legend_width, legend_y + legend_height), 1.0);
         self.draw_line.draw_line(cx, dvec2(legend_x, legend_y), dvec2(legend_x, legend_y + legend_height), 1.0);
@@ -242,7 +258,7 @@ impl PieChart {
             };
             self.draw_line.draw_abs(cx, marker_rect);
 
-            self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+            self.label.set_color(self.theme.label_color);
             self.label.draw_at(
                 cx,
                 dvec2(legend_x + padding + marker_size + marker_text_gap, entry_y),
@@ -331,6 +347,7 @@ pub struct DonutChart {
     #[deref] #[live] view: View,
     #[live] draw_arc: DrawArc,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] slices: Vec<DonutSlice>,
     #[rust] inner_radius_ratio: f64,
@@ -436,7 +453,7 @@ impl Widget for DonutChart {
                         slice.label.clone()
                     };
 
-                    self.label.draw_text.color = vec4(0.3, 0.3, 0.3, 1.0);
+                    self.label.draw_text.color = self.theme.label_color;
                     let anchor = if mid_angle.cos() > 0.0 { TextAnchor::MiddleLeft } else { TextAnchor::MiddleRight };
                     self.label.draw_at(cx, label_pos, &label_text, anchor);
                 }
@@ -446,7 +463,7 @@ impl Widget for DonutChart {
 
             // Draw center label
             if !self.center_label.is_empty() {
-                self.label.draw_text.color = vec4(0.2, 0.2, 0.2, 1.0);
+                self.label.draw_text.color = self.theme.label_color;
                 self.label.draw_at(cx, center, &self.center_label, TextAnchor::Center);
             }
 

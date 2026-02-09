@@ -13,12 +13,20 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+        }
     }
 
     pub SankeyDiagram = {{SankeyDiagram}} {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+        }
     }
 }
 
@@ -47,6 +55,7 @@ pub struct HexbinChart {
     #[walk] walk: Walk,
     #[layout] layout: Layout,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
 
     #[rust] points: Vec<HexbinPoint>,
     #[rust] hex_radius: f64,
@@ -300,6 +309,7 @@ pub struct SankeyDiagram {
     #[walk] walk: Walk,
     #[layout] layout: Layout,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
 
     #[rust] nodes: Vec<SankeyNode>,
     #[rust] links: Vec<SankeyLink>,

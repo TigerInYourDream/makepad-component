@@ -13,12 +13,18 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+        }
     }
 
     pub Line3D = {{Line3D}} {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+        }
     }
 }
 
@@ -45,6 +51,7 @@ pub struct Scatter3D {
     #[live] draw_point: DrawPlotPoint,
     #[live] draw_line: DrawPlotLine,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] points: Vec<Point3D>,
     #[rust] default_color: Vec4,
@@ -252,6 +259,7 @@ pub struct Line3D {
     #[deref] #[live] view: View,
     #[live] draw_line: DrawPlotLine,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] series: Vec<Line3DSeries>,
     #[rust] view3d: View3D,

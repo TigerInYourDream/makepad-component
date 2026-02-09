@@ -3,6 +3,28 @@ use makepad_widgets::*;
 // Re-export styling enums
 pub use crate::elements::{LineStyle, MarkerStyle};
 
+live_design! {
+    pub ChartTheme = {{ChartTheme}} {
+        label_color: #d9d9d9ff,
+        axis_color: #8d8d99ff,
+        grid_color: #40404d80,
+        legend_bg_color: #1e1e26d9,
+        legend_border_color: #59596699,
+    }
+}
+
+/// Shared chart theme colors for UI elements (labels, axes, grid, legend).
+/// Embed as `#[live] theme: ChartTheme` in each chart widget so users can
+/// override individual colors in DSL or at runtime.
+#[derive(Live, LiveHook, LiveRegister)]
+pub struct ChartTheme {
+    #[live] pub label_color: Vec4,
+    #[live] pub axis_color: Vec4,
+    #[live] pub grid_color: Vec4,
+    #[live] pub legend_bg_color: Vec4,
+    #[live] pub legend_border_color: Vec4,
+}
+
 /// Step plot style - where to place the step
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub enum StepStyle {
@@ -269,7 +291,7 @@ impl ArrowAnnotation {
             start_y,
             end_x,
             end_y,
-            color: vec4(0.2, 0.2, 0.2, 1.0),
+            color: vec4(0.85, 0.85, 0.85, 1.0),
             line_width: 1.5,
             head_size: 8.0,
             text: None,

@@ -50,6 +50,7 @@ pub use hexbin::*;
 use makepad_widgets::*;
 
 pub fn live_design(cx: &mut Cx) {
+    types::live_design(cx);
     line::live_design(cx);
     bar::live_design(cx);
     scatter::live_design(cx);

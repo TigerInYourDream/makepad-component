@@ -13,6 +13,13 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+            grid_color: #40404d80,
+            legend_bg_color: #1e1e26d9,
+            legend_border_color: #59596699,
+        }
     }
 }
 
@@ -33,6 +40,9 @@ pub struct ScatterPlot {
 
     #[live]
     label: PlotLabel,
+
+    #[live]
+    theme: ChartTheme,
 
     #[rust]
     series: Vec<Series>,
@@ -289,7 +299,7 @@ impl ScatterPlot {
             return;
         }
 
-        self.draw_line.color = vec4(0.9, 0.9, 0.9, 1.0);
+        self.draw_line.color = self.theme.grid_color;
 
         // Horizontal grid lines
         let y_ticks = self.generate_ticks(self.y_range.0, self.y_range.1, 5);
@@ -309,7 +319,7 @@ impl ScatterPlot {
     }
 
     fn draw_axes(&mut self, cx: &mut Cx2d) {
-        self.draw_line.color = vec4(0.3, 0.3, 0.3, 1.0);
+        self.draw_line.color = self.theme.axis_color;
 
         // X axis
         let x1 = dvec2(self.plot_area.left, self.plot_area.bottom);
@@ -343,7 +353,7 @@ impl ScatterPlot {
     }
 
     fn draw_labels(&mut self, cx: &mut Cx2d) {
-        self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+        self.label.set_color(self.theme.label_color);
 
         // X axis tick labels
         let x_ticks = self.generate_ticks(self.x_range.0, self.x_range.1, 5);
@@ -401,7 +411,7 @@ impl ScatterPlot {
         };
 
         // Draw legend background
-        self.draw_line.color = vec4(0.95, 0.95, 0.95, 0.9);
+        self.draw_line.color = self.theme.legend_bg_color;
         let bg_rect = Rect {
             pos: dvec2(legend_x, legend_y),
             size: dvec2(legend_width, legend_height),
@@ -409,7 +419,7 @@ impl ScatterPlot {
         self.draw_line.draw_abs(cx, bg_rect);
 
         // Draw legend border
-        self.draw_line.color = vec4(0.8, 0.8, 0.8, 1.0);
+        self.draw_line.color = self.theme.legend_border_color;
         self.draw_line.draw_line(cx, dvec2(legend_x, legend_y), dvec2(legend_x + legend_width, legend_y), 1.0);
         self.draw_line.draw_line(cx, dvec2(legend_x, legend_y + legend_height), dvec2(legend_x + legend_width, legend_y + legend_height), 1.0);
         self.draw_line.draw_line(cx, dvec2(legend_x, legend_y), dvec2(legend_x, legend_y + legend_height), 1.0);
@@ -423,7 +433,7 @@ impl ScatterPlot {
             self.draw_point.color = color;
             self.draw_point.draw_point(cx, dvec2(legend_x + padding + marker_size / 2.0, entry_y), marker_size / 2.0);
 
-            self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+            self.label.set_color(self.theme.label_color);
             self.label.draw_at(
                 cx,
                 dvec2(legend_x + padding + marker_size + marker_text_gap, entry_y),

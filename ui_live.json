@@ -10,894 +10,256 @@
       "components": [
         {
           "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day2-evening"
-                ]
-              }
-            }
-          },
-          "id": "day2-row3"
-        },
-        {
-          "component": {
             "Text": {
               "text": {
-                "literalString": "📅 Day 1: Shibuya & Harajuku"
-              },
-              "usageHint": "h3"
-            }
-          },
-          "id": "day1-title"
-        },
-        {
-          "component": {
-            "Column": {
-              "children": {
-                "explicitList": [
-                  "day2-title",
-                  "day2-row1",
-                  "day2-row2",
-                  "day2-row3",
-                  "day2-budget"
-                ]
-              }
-            }
-          },
-          "id": "day2-col"
-        },
-        {
-          "component": {
-            "Column": {
-              "children": {
-                "explicitList": [
-                  "day4-title",
-                  "day4-row1",
-                  "day4-row2",
-                  "day4-row3",
-                  "day4-budget"
-                ]
-              }
-            }
-          },
-          "id": "day4-col"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day5-morning"
-                ]
-              }
-            }
-          },
-          "id": "day5-row1"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day7-evening"
-                ]
-              }
-            }
-          },
-          "id": "day7-row3"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day6-afternoon"
-                ]
-              }
-            }
-          },
-          "id": "day6-row2"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "☀️ Afternoon: Akihabara Electric Town, anime/manga shops"
+                "literalString": "Token & Message Analytics  |  Feb 2026"
               },
               "usageHint": "body"
             }
           },
-          "id": "day2-afternoon"
+          "id": "subtitle"
         },
         {
           "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day2-morning"
-                ]
-              }
-            }
-          },
-          "id": "day2-row1"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "📅 Day 7: Ueno & Departure"
+            "Chart": {
+              "chartType": "pie",
+              "colors": [
+                "#A78BFA",
+                "#FBBF24",
+                "#F472B6"
+              ],
+              "height": 400.0,
+              "labels": [
+                "Opus 4.5  90%",
+                "Opus 4.6  9%",
+                "Sonnet  1%"
+              ],
+              "series": [
+                {
+                  "name": "share",
+                  "values": [
+                    90.0,
+                    9.0,
+                    1.0
+                  ]
+                }
+              ],
+              "title": {
+                "literalString": "Model Share"
               },
-              "usageHint": "h3"
+              "width": 600.0
             }
           },
-          "id": "day7-title"
+          "id": "pie-model"
         },
         {
           "component": {
             "Text": {
               "text": {
-                "literalString": "📅 Day 3: Shinjuku"
-              },
-              "usageHint": "h3"
-            }
-          },
-          "id": "day3-title"
-        },
-        {
-          "component": {
-            "Column": {
-              "children": {
-                "explicitList": [
-                  "day1-title",
-                  "day1-row1",
-                  "day1-row2",
-                  "day1-row3",
-                  "day1-budget"
-                ]
-              }
-            }
-          },
-          "id": "day1-col"
-        },
-        {
-          "component": {
-            "Column": {
-              "children": {
-                "explicitList": [
-                  "day6-title",
-                  "day6-row1",
-                  "day6-row2",
-                  "day6-row3",
-                  "day6-budget"
-                ]
-              }
-            }
-          },
-          "id": "day6-col"
-        },
-        {
-          "component": {
-            "Column": {
-              "children": {
-                "explicitList": [
-                  "total-title",
-                  "total-breakdown",
-                  "total-amount"
-                ]
-              }
-            }
-          },
-          "id": "total-col"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day4-evening"
-                ]
-              }
-            }
-          },
-          "id": "day4-row3"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "☀️ Afternoon: Ginza shopping district, flagship stores"
+                "literalString": "Peak: Feb 9  350K tokens  14,200 msgs  15 sessions"
               },
               "usageHint": "body"
             }
           },
-          "id": "day4-afternoon"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "Day 1: $80 | Day 2: $60 | Day 3: $100 | Day 4: $150 | Day 5: $120 | Day 6: $90 | Day 7: $70"
-              },
-              "usageHint": "caption"
-            }
-          },
-          "id": "total-breakdown"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "☀️ Afternoon: Mt. Fuji 5th Station, Chureito Pagoda"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day5-afternoon"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "☀️ Afternoon: Odaiba Seaside Park, Statue of Liberty replica"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day6-afternoon"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "☀️ Afternoon: Last-minute shopping at Ameyoko Market"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day7-afternoon"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌅 Morning: Ueno Park, Tokyo National Museum or Ueno Zoo"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day7-morning"
+          "id": "peak"
         },
         {
           "component": {
             "Card": {
-              "child": "day6-col"
+              "child": "bar-tokens"
             }
           },
-          "id": "day6-card"
+          "id": "c1"
         },
         {
           "component": {
-            "Column": {
-              "children": {
-                "explicitList": [
-                  "day3-title",
-                  "day3-row1",
-                  "day3-row2",
-                  "day3-row3",
-                  "day3-budget"
-                ]
-              }
-            }
-          },
-          "id": "day3-col"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌅 Morning: Travel to Lake Kawaguchi, scenic views"
+            "Chart": {
+              "chartType": "bar",
+              "colors": [
+                "#60A5FA"
+              ],
+              "height": 350.0,
+              "labels": [
+                "1/25",
+                "1/26",
+                "1/27",
+                "1/28",
+                "1/29",
+                "2/3",
+                "2/4",
+                "2/5",
+                "2/6",
+                "2/7",
+                "2/8",
+                "2/9"
+              ],
+              "series": [
+                {
+                  "name": "K tokens",
+                  "values": [
+                    198.0,
+                    127.0,
+                    25.0,
+                    41.0,
+                    39.0,
+                    19.0,
+                    100.0,
+                    190.0,
+                    225.0,
+                    312.0,
+                    280.0,
+                    350.0
+                  ]
+                }
+              ],
+              "title": {
+                "literalString": "Daily Tokens (K)"
               },
-              "usageHint": "body"
+              "width": 950.0
             }
           },
-          "id": "day5-morning"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "💰 Budget: $120"
-              },
-              "usageHint": "caption"
-            }
-          },
-          "id": "day5-budget"
+          "id": "bar-tokens"
         },
         {
           "component": {
             "Card": {
-              "child": "day7-col"
+              "child": "pie-model"
             }
           },
-          "id": "day7-card"
+          "id": "c3"
         },
         {
           "component": {
             "Text": {
               "text": {
-                "literalString": "💰 Budget: $100"
-              },
-              "usageHint": "caption"
-            }
-          },
-          "id": "day3-budget"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "💰 Budget: $150"
-              },
-              "usageHint": "caption"
-            }
-          },
-          "id": "day4-budget"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "📅 Day 6: Odaiba & teamLab"
-              },
-              "usageHint": "h3"
-            }
-          },
-          "id": "day6-title"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌙 Evening: High-end dinner in Ginza, luxury window shopping"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day4-evening"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day1-morning"
-                ]
-              }
-            }
-          },
-          "id": "day1-row1"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "📅 Day 5: Mount Fuji Day Trip"
-              },
-              "usageHint": "h3"
-            }
-          },
-          "id": "day5-title"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌅 Morning: Shinjuku Gyoen National Garden"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day3-morning"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day3-afternoon"
-                ]
-              }
-            }
-          },
-          "id": "day3-row2"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🗼 Tokyo 7-Day Travel Planner"
+                "literalString": "Claude Code Usage Dashboard"
               },
               "usageHint": "h1"
             }
           },
-          "id": "main-title"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day1-afternoon"
-                ]
-              }
-            }
-          },
-          "id": "day1-row2"
+          "id": "title"
         },
         {
           "component": {
             "Card": {
-              "child": "day5-col"
+              "child": "line-msgs"
             }
           },
-          "id": "day5-card"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day3-morning"
-                ]
-              }
-            }
-          },
-          "id": "day3-row1"
+          "id": "c2"
         },
         {
           "component": {
             "Text": {
               "text": {
-                "literalString": "🌅 Morning: Tsukiji Outer Market, fresh sushi breakfast"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day4-morning"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌙 Evening: Dinner in Akihabara, arcade gaming centers"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day2-evening"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day6-morning"
-                ]
-              }
-            }
-          },
-          "id": "day6-row1"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌙 Evening: Rainbow Bridge, shopping at DiverCity Tokyo Plaza"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day6-evening"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day6-evening"
-                ]
-              }
-            }
-          },
-          "id": "day6-row3"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌅 Morning: Senso-ji Temple, Nakamise Shopping Street"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day2-morning"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day4-morning"
-                ]
-              }
-            }
-          },
-          "id": "day4-row1"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "💰 Budget: $70"
+                "literalString": "Lifetime: 504 sessions  155K messages  since Dec 2025"
               },
               "usageHint": "caption"
             }
           },
-          "id": "day7-budget"
-        },
-        {
-          "component": {
-            "Card": {
-              "child": "total-col"
-            }
-          },
-          "id": "total-card"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day4-afternoon"
-                ]
-              }
-            }
-          },
-          "id": "day4-row2"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day2-afternoon"
-                ]
-              }
-            }
-          },
-          "id": "day2-row2"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day5-evening"
-                ]
-              }
-            }
-          },
-          "id": "day5-row3"
+          "id": "total"
         },
         {
           "component": {
             "Text": {
               "text": {
-                "literalString": "💰 Budget: $90"
-              },
-              "usageHint": "caption"
-            }
-          },
-          "id": "day6-budget"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "💰 Budget: $60"
-              },
-              "usageHint": "caption"
-            }
-          },
-          "id": "day2-budget"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day7-morning"
-                ]
-              }
-            }
-          },
-          "id": "day7-row1"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day7-afternoon"
-                ]
-              }
-            }
-          },
-          "id": "day7-row2"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌙 Evening: Shibuya Sky observation deck, dinner in Shibuya"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day1-evening"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "💵 GRAND TOTAL: $670"
-              },
-              "usageHint": "h1"
-            }
-          },
-          "id": "total-amount"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌅 Morning: Shibuya Crossing, Hachiko Statue"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day1-morning"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "📅 Day 2: Asakusa & Akihabara"
+                "literalString": "Token Distribution by Model"
               },
               "usageHint": "h3"
             }
           },
-          "id": "day2-title"
-        },
-        {
-          "component": {
-            "Card": {
-              "child": "day4-col"
-            }
-          },
-          "id": "day4-card"
-        },
-        {
-          "component": {
-            "Card": {
-              "child": "day3-col"
-            }
-          },
-          "id": "day3-card"
+          "id": "pie-label"
         },
         {
           "component": {
             "Text": {
               "text": {
-                "literalString": "☀️ Afternoon: Tokyo Metropolitan Government Building (free view!)"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day3-afternoon"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌅 Morning: teamLab Planets digital art museum"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day6-morning"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "☀️ Afternoon: Harajuku Takeshita Street, Meiji Shrine"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day1-afternoon"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌙 Evening: Airport transfer, souvenir shopping, departure ✈️"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day7-evening"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌙 Evening: Omoide Yokocho (Memory Lane), Kabukicho district"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day3-evening"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "💴 Total Trip Budget"
+                "literalString": "Daily Message Count"
               },
               "usageHint": "h3"
             }
           },
-          "id": "total-title"
+          "id": "line-label"
         },
         {
           "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day1-evening"
-                ]
-              }
+            "Chart": {
+              "chartType": "line",
+              "colors": [
+                "#34D399"
+              ],
+              "height": 320.0,
+              "labels": [
+                "1/25",
+                "1/26",
+                "1/27",
+                "1/28",
+                "1/29",
+                "2/3",
+                "2/4",
+                "2/5",
+                "2/6",
+                "2/7",
+                "2/8",
+                "2/9"
+              ],
+              "series": [
+                {
+                  "name": "Msgs",
+                  "values": [
+                    14213.0,
+                    12392.0,
+                    3148.0,
+                    4480.0,
+                    4618.0,
+                    5522.0,
+                    1895.0,
+                    7370.0,
+                    5913.0,
+                    12590.0,
+                    9850.0,
+                    14200.0
+                  ]
+                }
+              ],
+              "title": {
+                "literalString": "Messages per Day"
+              },
+              "width": 950.0
             }
           },
-          "id": "day1-row3"
+          "id": "line-msgs"
+        },
+        {
+          "component": {
+            "Text": {
+              "text": {
+                "literalString": "Daily Token Usage (in thousands)"
+              },
+              "usageHint": "h3"
+            }
+          },
+          "id": "bar-label"
         },
         {
           "component": {
             "Column": {
               "children": {
                 "explicitList": [
-                  "day7-title",
-                  "day7-row1",
-                  "day7-row2",
-                  "day7-row3",
-                  "day7-budget"
-                ]
-              }
-            }
-          },
-          "id": "day7-col"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "💰 Budget: $80"
-              },
-              "usageHint": "caption"
-            }
-          },
-          "id": "day1-budget"
-        },
-        {
-          "component": {
-            "Card": {
-              "child": "day1-col"
-            }
-          },
-          "id": "day1-card"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "🌙 Evening: Onsen hot spring experience, return to Tokyo"
-              },
-              "usageHint": "body"
-            }
-          },
-          "id": "day5-evening"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day3-evening"
-                ]
-              }
-            }
-          },
-          "id": "day3-row3"
-        },
-        {
-          "component": {
-            "Text": {
-              "text": {
-                "literalString": "📅 Day 4: Tsukiji & Ginza"
-              },
-              "usageHint": "h3"
-            }
-          },
-          "id": "day4-title"
-        },
-        {
-          "component": {
-            "Column": {
-              "children": {
-                "explicitList": [
-                  "main-title",
-                  "day1-card",
-                  "day2-card",
-                  "day3-card",
-                  "day4-card",
-                  "day5-card",
-                  "day6-card",
-                  "day7-card",
-                  "total-card"
+                  "title",
+                  "subtitle",
+                  "bar-label",
+                  "c1",
+                  "line-label",
+                  "c2",
+                  "pie-label",
+                  "c3",
+                  "peak",
+                  "total"
                 ]
               }
             }
           },
           "id": "root"
-        },
-        {
-          "component": {
-            "Card": {
-              "child": "day2-col"
-            }
-          },
-          "id": "day2-card"
-        },
-        {
-          "component": {
-            "Row": {
-              "children": {
-                "explicitList": [
-                  "day5-afternoon"
-                ]
-              }
-            }
-          },
-          "id": "day5-row2"
-        },
-        {
-          "component": {
-            "Column": {
-              "children": {
-                "explicitList": [
-                  "day5-title",
-                  "day5-row1",
-                  "day5-row2",
-                  "day5-row3",
-                  "day5-budget"
-                ]
-              }
-            }
-          },
-          "id": "day5-col"
         }
       ],
       "surfaceId": "main"

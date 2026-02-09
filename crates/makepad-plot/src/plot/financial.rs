@@ -13,12 +13,20 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+        }
     }
 
     pub WaterfallChart = {{WaterfallChart}} {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+        }
     }
 }
 
@@ -52,6 +60,7 @@ pub struct CandlestickChart {
     #[live] draw_fill: DrawPlotFill,
     #[live] draw_line: DrawPlotLine,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] candles: Vec<Candle>,
     #[rust] plot_area: PlotArea,
@@ -151,7 +160,7 @@ impl Widget for CandlestickChart {
             }
 
             // Draw axes
-            self.draw_line.color = vec4(0.3, 0.3, 0.3, 1.0);
+            self.draw_line.color = self.theme.label_color;
             self.draw_line.draw_line(cx,
                 dvec2(plot_rect.pos.x, plot_rect.pos.y + plot_rect.size.y),
                 dvec2(plot_rect.pos.x + plot_rect.size.x, plot_rect.pos.y + plot_rect.size.y), 1.0);
@@ -275,6 +284,7 @@ pub struct WaterfallChart {
     #[live] draw_fill: DrawPlotFill,
     #[live] draw_line: DrawPlotLine,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] entries: Vec<WaterfallEntry>,
     #[rust] positive_color: Vec4,
@@ -370,7 +380,7 @@ impl Widget for WaterfallChart {
             }
 
             // Draw axes
-            self.draw_line.color = vec4(0.3, 0.3, 0.3, 1.0);
+            self.draw_line.color = self.theme.label_color;
             self.draw_line.draw_line(cx,
                 dvec2(plot_rect.pos.x, plot_rect.pos.y + plot_rect.size.y),
                 dvec2(plot_rect.pos.x + plot_rect.size.x, plot_rect.pos.y + plot_rect.size.y), 1.0);

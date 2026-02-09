@@ -13,12 +13,19 @@ live_design! {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+            axis_color: #8d8d99ff,
+        }
     }
 
     pub QuiverPlot = {{QuiverPlot}} {
         width: Fill,
         height: Fill,
         label: <PlotLabel> {}
+        theme: {
+            label_color: #d9d9d9ff,
+        }
     }
 }
 
@@ -28,6 +35,7 @@ pub struct ContourPlot {
     #[live] draw_line: DrawPlotLine,
     #[live] draw_fill: DrawPlotFill,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] data: Vec<Vec<f64>>,
     #[rust] x_range: (f64, f64),
@@ -114,13 +122,13 @@ impl ContourPlot {
             }
         }
 
-        self.draw_line.color = vec4(0.3, 0.3, 0.3, 1.0);
+        self.draw_line.color = self.theme.label_color;
         self.draw_line.draw_line(cx, dvec2(self.plot_area.left, self.plot_area.bottom), dvec2(self.plot_area.right, self.plot_area.bottom), 1.0);
         self.draw_line.draw_line(cx, dvec2(self.plot_area.left, self.plot_area.bottom), dvec2(self.plot_area.left, self.plot_area.top), 1.0);
     }
 
     fn draw_axis_labels(&mut self, cx: &mut Cx2d) {
-        self.label.set_color(vec4(0.4, 0.4, 0.4, 1.0));
+        self.label.set_color(self.theme.axis_color);
         let n_ticks = 5;
         // X-axis ticks
         for i in 0..=n_ticks {
@@ -130,7 +138,7 @@ impl ContourPlot {
             let txt = format!("{:.1}", val);
             self.label.draw_at(cx, dvec2(x_pos, self.plot_area.bottom + 12.0), &txt, TextAnchor::Center);
             // Tick mark
-            self.draw_line.color = vec4(0.4, 0.4, 0.4, 0.6);
+            self.draw_line.color = self.theme.axis_color;
             self.draw_line.draw_line(cx, dvec2(x_pos, self.plot_area.bottom), dvec2(x_pos, self.plot_area.bottom + 4.0), 1.0);
         }
         // Y-axis ticks
@@ -140,13 +148,13 @@ impl ContourPlot {
             let val = self.y_range.0 + frac * (self.y_range.1 - self.y_range.0);
             let txt = format!("{:.1}", val);
             self.label.draw_at(cx, dvec2(self.plot_area.left - 8.0, y_pos), &txt, TextAnchor::MiddleRight);
-            self.draw_line.color = vec4(0.4, 0.4, 0.4, 0.6);
+            self.draw_line.color = self.theme.axis_color;
             self.draw_line.draw_line(cx, dvec2(self.plot_area.left - 4.0, y_pos), dvec2(self.plot_area.left, y_pos), 1.0);
         }
     }
 
     fn draw_labels(&mut self, cx: &mut Cx2d) {
-        self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+        self.label.set_color(self.theme.label_color);
         if !self.title.is_empty() {
             self.label.draw_at(cx, dvec2((self.plot_area.left + self.plot_area.right) / 2.0, self.plot_area.top - 15.0), &self.title, TextAnchor::Center);
         }
@@ -174,6 +182,7 @@ pub struct QuiverPlot {
     #[deref] #[live] view: View,
     #[live] draw_line: DrawPlotLine,
     #[live] label: PlotLabel,
+    #[live] theme: ChartTheme,
     #[rust] title: String,
     #[rust] x: Vec<f64>,
     #[rust] y: Vec<f64>,
@@ -242,7 +251,7 @@ impl QuiverPlot {
     }
 
     fn draw_labels(&mut self, cx: &mut Cx2d) {
-        self.label.set_color(vec4(0.3, 0.3, 0.3, 1.0));
+        self.label.set_color(self.theme.label_color);
         if !self.title.is_empty() {
             self.label.draw_at(cx, dvec2((self.plot_area.left + self.plot_area.right) / 2.0, self.plot_area.top - 15.0), &self.title, TextAnchor::Center);
         }
