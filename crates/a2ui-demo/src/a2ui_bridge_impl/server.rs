@@ -89,6 +89,7 @@ async fn call_llm_stream(
     let mut processed_indices: std::collections::HashSet<i64> = std::collections::HashSet::new();
     let mut sent_begin = false;
     let mut accumulated_components: Vec<Value> = Vec::new(); // For ui_live.json updates
+    let mut streaming_builder = A2uiBuilder::new(); // For data accumulation during streaming
 
     // Clear ui_live.json at start of new stream
     let _ = std::fs::write("ui_live.json", "[]");
@@ -140,6 +141,9 @@ async fn call_llm_stream(
                                                 // Mark as processed
                                                 processed_indices.insert(index);
 
+                                                // Feed to builder for data accumulation
+                                                streaming_builder.process_tool_call(&entry.1, &args);
+
                                                 // Send beginRendering on first component
                                                 if !sent_begin {
                                                     sent_begin = true;
@@ -158,17 +162,17 @@ async fn call_llm_stream(
                                                     ]);
                                                     let _ = tx.send(update_msg.to_string());
                                                     info!("Sent component: {}", entry.1);
-
-                                                    // Accumulate and write to ui_live.json for /rpc polling
                                                     accumulated_components.push(comp);
-                                                    let a2ui = json!([
-                                                        {"beginRendering": {"surfaceId": "main", "root": "streaming-root"}},
-                                                        {"surfaceUpdate": {"surfaceId": "main", "components": accumulated_components}},
-                                                        {"dataModelUpdate": {"surfaceId": "main", "path": "/", "contents": []}}
-                                                    ]);
-                                                    let _ = std::fs::write("ui_live.json", serde_json::to_string(&a2ui).unwrap_or_default());
-                                                    debug!("Updated ui_live.json ({} components)", accumulated_components.len());
                                                 }
+
+                                                // Write to ui_live.json with accumulated components AND data
+                                                let a2ui = json!([
+                                                    {"beginRendering": {"surfaceId": "main", "root": "streaming-root"}},
+                                                    {"surfaceUpdate": {"surfaceId": "main", "components": accumulated_components}},
+                                                    {"dataModelUpdate": {"surfaceId": "main", "path": "/", "contents": streaming_builder.data_contents}}
+                                                ]);
+                                                let _ = std::fs::write("ui_live.json", serde_json::to_string(&a2ui).unwrap_or_default());
+                                                debug!("Updated ui_live.json ({} components, {} data entries)", accumulated_components.len(), streaming_builder.data_contents.len());
                                             }
                                         }
                                     }
@@ -279,7 +283,32 @@ Example for music generation:
 2. generate_music(prompt="relaxing piano melody with soft ambient sounds", instrumental=true)
 3. create_audio_player(id="player", url="<will be filled>", title="Relaxing Piano")
 4. create_column(id="root", children=["title", "player"])
-5. render_ui(rootId="root")"#;
+5. render_ui(rootId="root")
+
+CALENDAR / SCHEDULE:
+When asked to create a calendar, weekly planner, or schedule:
+1. Use create_calendar to define the grid structure (columns, rows, headers)
+2. Use set_calendar_data to populate ALL cells in ONE call (much more efficient than individual set_data calls)
+3. Each cell needs: line1 (main text), line2 (sub text), time, description, tips
+
+Example for a 3-day travel planner:
+1. create_calendar(id="cal", title="🗼 Tokyo Trip", columns=3, columnHeaders=["Day 1", "Day 2", "Day 3"], columnSubtitles=["Shibuya", "Asakusa", "Akihabara"], rowLabels=["", "🌅 AM", "☀️ PM", "🌙 Eve"], rowColorHints=["header", "morning", "afternoon", "evening"])
+2. set_calendar_data(rows=[
+     [{"line1":"","line2":""},{"line1":"","line2":""},{"line1":"","line2":""}],
+     [{"line1":"Shibuya","line2":"Crossing","time":"9:00-12:00","description":"Famous scramble crossing, world's busiest intersection","tips":"Go to Starbucks 2F for best view"},{"line1":"Senso-ji","line2":"Temple","time":"9:00-11:00","description":"Tokyo's oldest temple in Asakusa","tips":"Visit early to avoid crowds"},{"line1":"Akihabara","line2":"Electronics","time":"10:00-12:00","description":"Electric Town for anime and tech","tips":"Check tax-free shops"}],
+     [{"line1":"Harajuku","line2":"Fashion","time":"13:00-16:00","description":"Takeshita Street youth fashion","tips":"Try crepes"},{"line1":"Skytree","line2":"Observation","time":"13:00-15:00","description":"634m tall tower with city views","tips":"Book tickets online"},{"line1":"Ueno","line2":"Park & Museum","time":"13:00-16:00","description":"National Museum and Ueno Park","tips":"Free on first Sat of month"}],
+     [{"line1":"Shibuya Sky","line2":"Night View","time":"18:00-20:00","description":"Rooftop observation deck","tips":"Sunset timing is best"},{"line1":"Sumida River","line2":"Cruise","time":"17:00-19:00","description":"Evening river cruise","tips":"Bring camera for bridge lights"},{"line1":"Ameyoko","line2":"Street Food","time":"17:00-19:00","description":"Bustling market street","tips":"Try fresh seafood"}]
+   ], footer="💰 TOTAL: $450")
+3. create_column(id="root", children=["cal"])
+4. render_ui(rootId="root")
+
+IMPORTANT for calendar:
+- ALWAYS use set_calendar_data (NOT individual set_data calls) to populate calendar cells
+- Row 0 = header spacer (empty cells: {"line1":"","line2":""})
+- Row 1+ = content rows matching rowLabels[1+]
+- Column indices 0..N-1 match columnHeaders order
+- EVERY content cell MUST have: line1, line2, time, description, tips (for detail panel)
+- set_calendar_data is a single tool call that handles all cells efficiently"#;
 
             let mut messages = vec![
                 json!({"role": "system", "content": system_prompt}),

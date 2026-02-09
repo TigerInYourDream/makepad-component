@@ -137,14 +137,15 @@ fn get_a2ui_tools() -> Value {
             "type": "function",
             "function": {
                 "name": "set_data",
-                "description": "Set initial data value in the data model",
+                "description": "Set initial data value in the data model. For simple values use stringValue/numberValue/booleanValue. For nested objects (like calendar cells), use mapValue with a JSON object.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "path": {"type": "string", "description": "JSON pointer path (e.g., '/volume', '/user/name')"},
+                        "path": {"type": "string", "description": "JSON pointer path (e.g., '/volume', '/calendar/cells/1/0')"},
                         "stringValue": {"type": "string", "description": "String value to set"},
                         "numberValue": {"type": "number", "description": "Number value to set"},
-                        "booleanValue": {"type": "boolean", "description": "Boolean value to set"}
+                        "booleanValue": {"type": "boolean", "description": "Boolean value to set"},
+                        "mapValue": {"type": "object", "description": "Nested object value (e.g., {\"line1\": \"Title\", \"line2\": \"Subtitle\", \"description\": \"Details\"})"}
                     },
                     "required": ["path"]
                 }
@@ -230,6 +231,61 @@ fn get_a2ui_tools() -> Value {
                     "required": ["id", "url", "title"]
                 }
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "create_calendar",
+                "description": "Create a calendar/grid component for weekly planners, schedules, timetables. Renders as a table with column headers, row labels, and cells bound to data model. Each cell has line1 (main text) and line2 (sub text). Click a cell to see its detail (description, time, tips). After creating, use set_calendar_data to populate ALL cells in one call. Row 0 is typically empty (header spacer). Set /calendar/grandTotal for footer text.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "Unique component ID"},
+                        "title": {"type": "string", "description": "Calendar title"},
+                        "columns": {"type": "integer", "description": "Number of columns (default 7 for weekly view)"},
+                        "columnHeaders": {"type": "array", "items": {"type": "string"}, "description": "Column header labels (e.g., ['Mon 2/10', 'Tue 2/11', ...])"},
+                        "columnSubtitles": {"type": "array", "items": {"type": "string"}, "description": "Column subtitle labels (e.g., ['Shibuya', 'Asakusa', ...])"},
+                        "rowLabels": {"type": "array", "items": {"type": "string"}, "description": "Row labels (e.g., ['', '🌅 AM', '☀️ PM', '🌙 Eve', '💰'])"},
+                        "rowColorHints": {"type": "array", "items": {"type": "string"}, "description": "Row color hints: 'header', 'morning', 'afternoon', 'evening', 'budget'"},
+                        "cellsDataPath": {"type": "string", "description": "Data model path for cell data (default: '/calendar/cells')"},
+                        "footerDataPath": {"type": "string", "description": "Data model path for footer text (default: '/calendar/grandTotal')"}
+                    },
+                    "required": ["id", "title", "columnHeaders", "rowLabels"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "set_calendar_data",
+                "description": "Bulk-set ALL calendar cell data in one call. This is much more efficient than calling set_data for each cell individually. Provide a 2D array of rows, where each row is an array of cell objects. Each cell object has: line1 (main text), line2 (sub text), time (time range), description (detailed description shown in detail panel), tips (travel tips shown in detail panel). Row 0 should be empty cells for header spacer. IMPORTANT: You MUST provide time, description, and tips for content rows (row 1+) so the detail panel shows rich information when a cell is clicked.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "rows": {
+                            "type": "array",
+                            "description": "2D array: rows[rowIndex][colIndex] = cell object. Row 0 = header spacer (empty cells). Row 1+ = content rows.",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "line1": {"type": "string", "description": "Main text (e.g., location name)"},
+                                        "line2": {"type": "string", "description": "Sub text (e.g., activity type)"},
+                                        "time": {"type": "string", "description": "Time range (e.g., '9:00 - 12:00')"},
+                                        "description": {"type": "string", "description": "Detailed description for detail panel"},
+                                        "tips": {"type": "string", "description": "Travel tips for detail panel"}
+                                    }
+                                }
+                            }
+                        },
+                        "footer": {"type": "string", "description": "Footer text (e.g., '💰 GRAND TOTAL: $670')"},
+                        "cellsDataPath": {"type": "string", "description": "Data model path for cells (default: '/calendar/cells')"},
+                        "footerDataPath": {"type": "string", "description": "Data model path for footer (default: '/calendar/grandTotal')"}
+                    },
+                    "required": ["rows"]
+                }
+            }
         }
     ])
 }
@@ -283,6 +339,40 @@ fn build_component_json(name: &str, args: &Value) -> Option<Value> {
         "create_card" => {
             let child = args.get("child").and_then(|v| v.as_str()).unwrap_or("");
             Some(json!({"id": id, "component": {"Card": {"child": child}}}))
+        }
+        "create_calendar" => {
+            let title = args.get("title").and_then(|v| v.as_str()).unwrap_or("Calendar");
+            let columns = args.get("columns").and_then(|v| v.as_u64()).unwrap_or(7);
+            let column_headers = args.get("columnHeaders").and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect::<Vec<_>>())
+                .unwrap_or_default();
+            let column_subtitles = args.get("columnSubtitles").and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect::<Vec<_>>())
+                .unwrap_or_default();
+            let row_labels = args.get("rowLabels").and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect::<Vec<_>>())
+                .unwrap_or_default();
+            let row_color_hints = args.get("rowColorHints").and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect::<Vec<_>>())
+                .unwrap_or_default();
+            let cells_path = args.get("cellsDataPath").and_then(|v| v.as_str()).unwrap_or("/calendar/cells");
+            let footer_path = args.get("footerDataPath").and_then(|v| v.as_str()).unwrap_or("/calendar/grandTotal");
+
+            let mut cal_obj = json!({
+                "title": {"literalString": title},
+                "columns": columns,
+                "columnHeaders": column_headers,
+                "rowLabels": row_labels,
+                "cells": {"path": cells_path},
+                "footer": {"path": footer_path}
+            });
+            if !column_subtitles.is_empty() {
+                cal_obj["columnSubtitles"] = json!(column_subtitles);
+            }
+            if !row_color_hints.is_empty() {
+                cal_obj["rowColorHints"] = json!(row_color_hints);
+            }
+            Some(json!({"id": id, "component": {"Calendar": cal_obj}}))
         }
         "render_ui" => {
             // This is the final layout - handled separately

@@ -38,7 +38,9 @@ impl A2uiBuilder {
             "create_column" => self.create_column(args),
             "create_row" => self.create_row(args),
             "create_chart" => self.create_chart(args),
+            "create_calendar" => self.create_calendar(args),
             "set_data" => self.set_data(args),
+            "set_calendar_data" => self.set_calendar_data(args),
             "render_ui" => self.render_ui(args),
             #[cfg(feature = "mureka")]
             "generate_music" => self.generate_music(args),
@@ -305,6 +307,52 @@ impl A2uiBuilder {
         }));
     }
 
+    fn create_calendar(&mut self, args: &Value) {
+        let id = args["id"].as_str().unwrap_or("calendar");
+        let title = args["title"].as_str().unwrap_or("Calendar");
+        let columns = args["columns"].as_u64().unwrap_or(7);
+        let column_headers: Vec<String> = args["columnHeaders"]
+            .as_array()
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+            .unwrap_or_default();
+        let column_subtitles: Vec<String> = args["columnSubtitles"]
+            .as_array()
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+            .unwrap_or_default();
+        let row_labels: Vec<String> = args["rowLabels"]
+            .as_array()
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+            .unwrap_or_default();
+        let row_color_hints: Vec<String> = args["rowColorHints"]
+            .as_array()
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+            .unwrap_or_default();
+        let cells_path = args["cellsDataPath"].as_str().unwrap_or("/calendar/cells");
+        let footer_path = args["footerDataPath"].as_str().unwrap_or("/calendar/grandTotal");
+
+        let mut cal_obj = json!({
+            "title": {"literalString": title},
+            "columns": columns,
+            "columnHeaders": column_headers,
+            "rowLabels": row_labels,
+            "cells": {"path": cells_path},
+            "footer": {"path": footer_path}
+        });
+        if !column_subtitles.is_empty() {
+            cal_obj["columnSubtitles"] = json!(column_subtitles);
+        }
+        if !row_color_hints.is_empty() {
+            cal_obj["rowColorHints"] = json!(row_color_hints);
+        }
+
+        self.components.push(json!({
+            "id": id,
+            "component": {
+                "Calendar": cal_obj
+            }
+        }));
+    }
+
     fn set_data(&mut self, args: &Value) {
         let path = args["path"].as_str().unwrap_or("/");
 
@@ -315,6 +363,19 @@ impl A2uiBuilder {
             return;
         }
 
+        // Check if this is a mapValue (nested object)
+        if let Some(map_val) = args.get("mapValue") {
+            // Build nested valueMap from mapValue object
+            let mut leaf = self.build_value_map(map_val);
+            // Add the last path segment as key (consistent with non-mapValue path)
+            if let Some(last_key) = parts.last() {
+                leaf["key"] = json!(last_key);
+            }
+            let content = self.wrap_in_path(&parts, leaf);
+            self.merge_data_content(content);
+            return;
+        }
+
         let value = if let Some(s) = args["stringValue"].as_str() {
             json!({"valueString": s})
         } else if let Some(n) = args["numberValue"].as_f64() {
@@ -322,7 +383,6 @@ impl A2uiBuilder {
         } else if let Some(b) = args["booleanValue"].as_bool() {
             json!({"valueBoolean": b})
         } else if let Some(n) = args["value"].as_f64() {
-            // Fallback for simple "value" field
             json!({"valueNumber": n})
         } else if let Some(s) = args["value"].as_str() {
             json!({"valueString": s})
@@ -332,18 +392,132 @@ impl A2uiBuilder {
             json!({"valueString": ""})
         };
 
-        // For now, store as flat key-value (simplified)
+        // Build the leaf node
         let key = parts.last().unwrap_or(&"");
-        let mut content = json!({"key": key});
-
-        // Merge value fields
+        let mut leaf = json!({"key": key});
         if let Some(obj) = value.as_object() {
             for (k, v) in obj {
-                content[k] = v.clone();
+                leaf[k] = v.clone();
             }
         }
 
+        if parts.len() == 1 {
+            self.merge_data_content(leaf);
+        } else {
+            let content = self.wrap_in_path(&parts, leaf);
+            self.merge_data_content(content);
+        }
+    }
+
+    /// Bulk-set all calendar cell data from a 2D rows array.
+    /// Converts rows[row][col] = {line1, line2, time, description, tips}
+    /// into nested set_data calls at /calendar/cells/{row}/{col}.
+    fn set_calendar_data(&mut self, args: &Value) {
+        let cells_path = args["cellsDataPath"].as_str().unwrap_or("/calendar/cells");
+        let footer_path = args["footerDataPath"].as_str().unwrap_or("/calendar/grandTotal");
+
+        if let Some(rows) = args["rows"].as_array() {
+            for (row_idx, row) in rows.iter().enumerate() {
+                if let Some(cells) = row.as_array() {
+                    for (col_idx, cell) in cells.iter().enumerate() {
+                        let path = format!("{}/{}/{}", cells_path, row_idx, col_idx);
+                        let set_data_args = json!({
+                            "path": path,
+                            "mapValue": cell
+                        });
+                        self.set_data(&set_data_args);
+                    }
+                }
+            }
+        }
+
+        if let Some(footer) = args["footer"].as_str() {
+            let footer_args = json!({
+                "path": footer_path,
+                "stringValue": footer
+            });
+            self.set_data(&footer_args);
+        }
+    }
+
+    /// Build a valueMap from a JSON object (for calendar cell data etc.)
+    fn build_value_map(&self, val: &Value) -> Value {
+        if let Some(obj) = val.as_object() {
+            let entries: Vec<Value> = obj.iter().map(|(k, v)| {
+                if v.is_object() {
+                    let mut entry = json!({"key": k});
+                    let inner = self.build_value_map(v);
+                    if let Some(vm) = inner.get("valueMap") {
+                        entry["valueMap"] = vm.clone();
+                    }
+                    entry
+                } else if let Some(s) = v.as_str() {
+                    json!({"key": k, "valueString": s})
+                } else if let Some(n) = v.as_f64() {
+                    json!({"key": k, "valueNumber": n})
+                } else if let Some(b) = v.as_bool() {
+                    json!({"key": k, "valueBoolean": b})
+                } else {
+                    json!({"key": k, "valueString": v.to_string()})
+                }
+            }).collect();
+            json!({"valueMap": entries})
+        } else {
+            json!({})
+        }
+    }
+
+    /// Wrap a leaf value in nested valueMap for a given path
+    /// e.g., ["calendar", "cells", "1", "0"] wraps leaf into calendar > cells > 1 > 0
+    fn wrap_in_path(&self, parts: &[&str], leaf: Value) -> Value {
+        if parts.len() <= 1 {
+            return leaf;
+        }
+        // Build from inside out: parts[0] is root key, leaf already has last key
+        let mut current = leaf;
+        for i in (0..parts.len() - 1).rev() {
+            current = json!({
+                "key": parts[i],
+                "valueMap": [current]
+            });
+        }
+        current
+    }
+
+    /// Merge a data content entry into existing data_contents, combining nested valueMaps
+    fn merge_data_content(&mut self, content: Value) {
+        let key = content["key"].as_str().unwrap_or("").to_string();
+        // Find existing entry with same key
+        let found_idx = self.data_contents.iter().position(|c| c["key"].as_str() == Some(&key));
+        if let Some(idx) = found_idx {
+            if content.get("valueMap").is_some() && self.data_contents[idx].get("valueMap").is_some() {
+                let source = content;
+                Self::deep_merge_value_map(&mut self.data_contents[idx], &source);
+                return;
+            }
+        }
         self.data_contents.push(content);
+    }
+
+    /// Deep merge two valueMap structures
+    fn deep_merge_value_map(target: &mut Value, source: &Value) {
+        if let (Some(target_arr), Some(source_arr)) = (
+            target.get_mut("valueMap").and_then(|v| v.as_array_mut()),
+            source.get("valueMap").and_then(|v| v.as_array()),
+        ) {
+            for src_entry in source_arr {
+                let src_key = src_entry["key"].as_str().unwrap_or("").to_string();
+                if let Some(tgt_entry) = target_arr.iter_mut().find(|e| e["key"].as_str() == Some(&src_key)) {
+                    if src_entry.get("valueMap").is_some() && tgt_entry.get("valueMap").is_some() {
+                        Self::deep_merge_value_map(tgt_entry, src_entry);
+                    } else {
+                        *tgt_entry = src_entry.clone();
+                    }
+                } else {
+                    target_arr.push(src_entry.clone());
+                }
+            }
+        }
     }
 
     fn render_ui(&mut self, args: &Value) {
