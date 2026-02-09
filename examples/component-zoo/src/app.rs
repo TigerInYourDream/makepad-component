@@ -17,6 +17,10 @@ use makepad_components::slider::MpSliderWidgetRefExt;
 use makepad_components::switch::MpSwitchWidgetRefExt;
 use makepad_components::tab::MpTabWidgetRefExt;
 use makepad_components::theme::{apply_theme, ThemeMode};
+use makepad_components::dock::MpDockToggleWidgetRefExt;
+use makepad_components::dock::MpDockToggleRefExt;
+use makepad_components::dock::MpDockAreaWidgetRefExt;
+use makepad_components::dock::MpDockPlacement;
 
 live_design! {
     use link::theme::*;
@@ -54,6 +58,13 @@ live_design! {
     use makepad_components::text::*;
     use link::theme_colors::*;
     use makepad_components::tooltip::*;
+<<<<<<< HEAD
+||||||| parent of 73abf43 (feat(dock): add dock demo to component zoo)
+    use makepad_components::table::*;
+=======
+    use makepad_components::table::*;
+    use makepad_components::dock::*;
+>>>>>>> 73abf43 (feat(dock): add dock demo to component zoo)
 
     // ============================================================
     // Section Header Component
@@ -3346,6 +3357,572 @@ live_design! {
 
                             <MpDivider> {}
 
+<<<<<<< HEAD
+||||||| parent of 73abf43 (feat(dock): add dock demo to component zoo)
+                            // ===== Table Section =====
+                            <View> {
+                                width: Fill, height: Fit,
+                                flow: Down,
+                                spacing: 16,
+
+                                <SectionHeader> { text: "Table" }
+
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Down,
+                                    spacing: 24,
+
+                                    // Basic Table
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Basic Table" }
+
+                                        <MpTable> {
+                                            <MpTableHeader> {
+                                                <MpTableHeaderCell> { width: 150.0, label = { text: "Name" } }
+                                                <MpTableHeaderCell> { width: 200.0, label = { text: "Email" } }
+                                                <MpTableHeaderCell> { width: 120.0, label = { text: "Role" } }
+                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Status" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "John Doe" } }
+                                                <MpTableCell> { width: 200.0, label = { text: "john@example.com" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Developer" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "Active" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "Jane Smith" } }
+                                                <MpTableCell> { width: 200.0, label = { text: "jane@example.com" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Designer" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "Active" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "Bob Wilson" } }
+                                                <MpTableCell> { width: 200.0, label = { text: "bob@example.com" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Manager" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "Away" } }
+                                            }
+                                        }
+                                    }
+
+                                    // Striped Table
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Striped Table" }
+
+                                        <MpTable> {
+                                            stripe: true
+
+                                            <MpTableHeader> {
+                                                <MpTableHeaderCell> { width: 80.0, label = { text: "ID" } }
+                                                <MpTableHeaderCell> { width: 150.0, label = { text: "Product" } }
+                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Price" } }
+                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Stock" } }
+                                            }
+                                            <MpTableRow> {
+                                                draw_bg: { stripe: 0.0 }
+                                                <MpTableCell> { width: 80.0, label = { text: "001" } }
+                                                <MpTableCell> { width: 150.0, label = { text: "Laptop" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "$999" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "50" } }
+                                            }
+                                            <MpTableRow> {
+                                                draw_bg: { stripe: 1.0 }
+                                                <MpTableCell> { width: 80.0, label = { text: "002" } }
+                                                <MpTableCell> { width: 150.0, label = { text: "Mouse" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "$29" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "200" } }
+                                            }
+                                            <MpTableRow> {
+                                                draw_bg: { stripe: 0.0 }
+                                                <MpTableCell> { width: 80.0, label = { text: "003" } }
+                                                <MpTableCell> { width: 150.0, label = { text: "Keyboard" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "$79" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "150" } }
+                                            }
+                                            <MpTableRow> {
+                                                draw_bg: { stripe: 1.0 }
+                                                <MpTableCell> { width: 80.0, label = { text: "004" } }
+                                                <MpTableCell> { width: 150.0, label = { text: "Monitor" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "$299" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "75" } }
+                                            }
+                                        }
+                                    }
+
+                                    // Borderless Table
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Borderless Table" }
+
+                                        <MpTable> {
+                                            bordered: false
+
+                                            <MpTableHeader> {
+                                                <MpTableHeaderCell> { width: 150.0, label = { text: "Task" } }
+                                                <MpTableHeaderCell> { width: 120.0, label = { text: "Assignee" } }
+                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Priority" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "Fix login bug" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Alice" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "High" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "Update docs" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Bob" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "Medium" } }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            <MpDivider> {}
+
+=======
+                            // ===== Dock Section =====
+                            <View> {
+                                width: Fill, height: Fit,
+                                flow: Down,
+                                spacing: 16,
+
+                                <SectionHeader> { text: "Dock" }
+
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Down,
+                                    spacing: 24,
+
+                                    // Dock Area Demo
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Dock Area (with toggle buttons)" }
+
+                                        <View> {
+                                            width: Fill, height: Fit,
+                                            flow: Right,
+                                            spacing: 8,
+                                            padding: { bottom: 8 }
+
+                                            toggle_left = <MpDockToggle> {
+                                                width: 24, height: 36
+                                                placement: Left
+                                            }
+                                            toggle_bottom = <MpDockToggle> {
+                                                width: 36, height: 24
+                                                placement: Bottom
+                                            }
+                                            toggle_right = <MpDockToggle> {
+                                                width: 24, height: 36
+                                                placement: Right
+                                            }
+                                        }
+
+                                        dock_demo = <MpDockArea> {
+                                            width: Fill, height: 400
+
+                                            left_width: 180
+                                            right_width: 180
+                                            bottom_height: 120
+
+                                            main_row = {
+                                                left_dock = {
+                                                    show_bg: true
+                                                    draw_bg: { color: #f1f5f9 }
+                                                    padding: 8
+                                                    flow: Down
+                                                    spacing: 4
+
+                                                    <Label> {
+                                                        text: "Left Dock"
+                                                        draw_text: {
+                                                            text_style: <THEME_FONT_BOLD> { font_size: 12.0 }
+                                                            color: #334155
+                                                        }
+                                                    }
+                                                    <Label> {
+                                                        text: "File Explorer"
+                                                        draw_text: {
+                                                            text_style: <THEME_FONT_REGULAR> { font_size: 11.0 }
+                                                            color: #64748b
+                                                        }
+                                                    }
+                                                }
+
+                                                center = {
+                                                    show_bg: true
+                                                    draw_bg: { color: #ffffff }
+                                                    padding: 16
+                                                    flow: Down
+                                                    align: { x: 0.5, y: 0.5 }
+
+                                                    <Label> {
+                                                        text: "Center Area"
+                                                        draw_text: {
+                                                            text_style: <THEME_FONT_BOLD> { font_size: 16.0 }
+                                                            color: #0f172a
+                                                        }
+                                                    }
+                                                    <Label> {
+                                                        text: "Main content goes here"
+                                                        draw_text: {
+                                                            text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
+                                                            color: #64748b
+                                                        }
+                                                    }
+                                                }
+
+                                                right_dock = {
+                                                    show_bg: true
+                                                    draw_bg: { color: #f1f5f9 }
+                                                    padding: 8
+                                                    flow: Down
+                                                    spacing: 4
+
+                                                    <Label> {
+                                                        text: "Right Dock"
+                                                        draw_text: {
+                                                            text_style: <THEME_FONT_BOLD> { font_size: 12.0 }
+                                                            color: #334155
+                                                        }
+                                                    }
+                                                    <Label> {
+                                                        text: "Properties"
+                                                        draw_text: {
+                                                            text_style: <THEME_FONT_REGULAR> { font_size: 11.0 }
+                                                            color: #64748b
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            bottom_dock = {
+                                                show_bg: true
+                                                draw_bg: { color: #f8fafc }
+                                                padding: 8
+                                                flow: Down
+                                                spacing: 4
+
+                                                <Label> {
+                                                    text: "Bottom Dock"
+                                                    draw_text: {
+                                                        text_style: <THEME_FONT_BOLD> { font_size: 12.0 }
+                                                        color: #334155
+                                                    }
+                                                }
+                                                <Label> {
+                                                    text: "Terminal / Output"
+                                                    draw_text: {
+                                                        text_style: <THEME_FONT_REGULAR> { font_size: 11.0 }
+                                                        color: #64748b
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Splitter Demo
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Splitter (Horizontal)" }
+
+                                        <MpDockSplitter> {
+                                            width: Fill, height: 200
+                                            axis: Horizontal
+                                            split_ratio: 0.4
+
+                                            first = {
+                                                show_bg: true
+                                                draw_bg: { color: #eff6ff }
+                                                padding: 16
+                                                align: { x: 0.5, y: 0.5 }
+
+                                                <Label> {
+                                                    text: "Left Panel (40%)"
+                                                    draw_text: {
+                                                        text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
+                                                        color: #1e40af
+                                                    }
+                                                }
+                                            }
+
+                                            second = {
+                                                show_bg: true
+                                                draw_bg: { color: #f0fdf4 }
+                                                padding: 16
+                                                align: { x: 0.5, y: 0.5 }
+
+                                                <Label> {
+                                                    text: "Right Panel (60%)"
+                                                    draw_text: {
+                                                        text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
+                                                        color: #166534
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Splitter Vertical Demo
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Splitter (Vertical)" }
+
+                                        <MpDockSplitter> {
+                                            width: Fill, height: 200
+                                            axis: Vertical
+                                            split_ratio: 0.6
+
+                                            first = {
+                                                show_bg: true
+                                                draw_bg: { color: #fef3c7 }
+                                                padding: 16
+                                                align: { x: 0.5, y: 0.5 }
+
+                                                <Label> {
+                                                    text: "Top Panel (60%)"
+                                                    draw_text: {
+                                                        text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
+                                                        color: #924000
+                                                    }
+                                                }
+                                            }
+
+                                            second = {
+                                                show_bg: true
+                                                draw_bg: { color: #fce7f3 }
+                                                padding: 16
+                                                align: { x: 0.5, y: 0.5 }
+
+                                                <Label> {
+                                                    text: "Bottom Panel (40%)"
+                                                    draw_text: {
+                                                        text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
+                                                        color: #9d174d
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Tab Panel Demo
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Tab Panel" }
+
+                                        <MpDockTabPanel> {
+                                            width: Fill, height: 200
+
+                                            tab_bar = {
+                                                tab0 = <MpDockTab> { text: "Files" }
+                                                tab1 = <MpDockTab> { text: "Search" }
+                                                tab2 = <MpDockTab> { text: "Extensions" }
+                                            }
+
+                                            content = {
+                                                panel0 = <View> {
+                                                    width: Fill, height: Fill
+                                                    show_bg: true
+                                                    draw_bg: { color: #ffffff }
+                                                    padding: 16
+
+                                                    <Label> {
+                                                        text: "Files panel content"
+                                                        draw_text: {
+                                                            text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
+                                                            color: #334155
+                                                        }
+                                                    }
+                                                }
+                                                panel1 = <View> {
+                                                    width: Fill, height: Fill
+                                                    show_bg: true
+                                                    draw_bg: { color: #ffffff }
+                                                    padding: 16
+
+                                                    <Label> {
+                                                        text: "Search panel content"
+                                                        draw_text: {
+                                                            text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
+                                                            color: #334155
+                                                        }
+                                                    }
+                                                }
+                                                panel2 = <View> {
+                                                    width: Fill, height: Fill
+                                                    show_bg: true
+                                                    draw_bg: { color: #ffffff }
+                                                    padding: 16
+
+                                                    <Label> {
+                                                        text: "Extensions panel content"
+                                                        draw_text: {
+                                                            text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
+                                                            color: #334155
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            <MpDivider> {}
+
+                            // ===== Table Section =====
+                            <View> {
+                                width: Fill, height: Fit,
+                                flow: Down,
+                                spacing: 16,
+
+                                <SectionHeader> { text: "Table" }
+
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Down,
+                                    spacing: 24,
+
+                                    // Basic Table
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Basic Table" }
+
+                                        <MpTable> {
+                                            <MpTableHeader> {
+                                                <MpTableHeaderCell> { width: 150.0, label = { text: "Name" } }
+                                                <MpTableHeaderCell> { width: 200.0, label = { text: "Email" } }
+                                                <MpTableHeaderCell> { width: 120.0, label = { text: "Role" } }
+                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Status" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "John Doe" } }
+                                                <MpTableCell> { width: 200.0, label = { text: "john@example.com" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Developer" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "Active" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "Jane Smith" } }
+                                                <MpTableCell> { width: 200.0, label = { text: "jane@example.com" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Designer" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "Active" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "Bob Wilson" } }
+                                                <MpTableCell> { width: 200.0, label = { text: "bob@example.com" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Manager" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "Away" } }
+                                            }
+                                        }
+                                    }
+
+                                    // Striped Table
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Striped Table" }
+
+                                        <MpTable> {
+                                            stripe: true
+
+                                            <MpTableHeader> {
+                                                <MpTableHeaderCell> { width: 80.0, label = { text: "ID" } }
+                                                <MpTableHeaderCell> { width: 150.0, label = { text: "Product" } }
+                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Price" } }
+                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Stock" } }
+                                            }
+                                            <MpTableRow> {
+                                                draw_bg: { stripe: 0.0 }
+                                                <MpTableCell> { width: 80.0, label = { text: "001" } }
+                                                <MpTableCell> { width: 150.0, label = { text: "Laptop" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "$999" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "50" } }
+                                            }
+                                            <MpTableRow> {
+                                                draw_bg: { stripe: 1.0 }
+                                                <MpTableCell> { width: 80.0, label = { text: "002" } }
+                                                <MpTableCell> { width: 150.0, label = { text: "Mouse" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "$29" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "200" } }
+                                            }
+                                            <MpTableRow> {
+                                                draw_bg: { stripe: 0.0 }
+                                                <MpTableCell> { width: 80.0, label = { text: "003" } }
+                                                <MpTableCell> { width: 150.0, label = { text: "Keyboard" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "$79" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "150" } }
+                                            }
+                                            <MpTableRow> {
+                                                draw_bg: { stripe: 1.0 }
+                                                <MpTableCell> { width: 80.0, label = { text: "004" } }
+                                                <MpTableCell> { width: 150.0, label = { text: "Monitor" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "$299" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "75" } }
+                                            }
+                                        }
+                                    }
+
+                                    // Borderless Table
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Borderless Table" }
+
+                                        <MpTable> {
+                                            bordered: false
+
+                                            <MpTableHeader> {
+                                                <MpTableHeaderCell> { width: 150.0, label = { text: "Task" } }
+                                                <MpTableHeaderCell> { width: 120.0, label = { text: "Assignee" } }
+                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Priority" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "Fix login bug" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Alice" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "High" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "Update docs" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Bob" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "Medium" } }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            <MpDivider> {}
+
+>>>>>>> 73abf43 (feat(dock): add dock demo to component zoo)
                             // ===== Accordion Section =====
                             <View> {
                                 width: Fill, height: Fit,
@@ -3825,6 +4402,20 @@ impl MatchEvent for App {
             let mode = if on { ThemeMode::Dark } else { ThemeMode::Light };
             apply_theme(cx, mode);
             self.sync_theme_ui(cx);
+        }
+
+        // Handle Dock toggles
+        if self.ui.mp_dock_toggle(ids!(toggle_left)).toggled(&actions) {
+            let expanded = self.ui.mp_dock_toggle(ids!(toggle_left)).is_expanded();
+            self.ui.mp_dock_area(ids!(dock_demo)).set_dock_visible(cx, MpDockPlacement::Left, expanded);
+        }
+        if self.ui.mp_dock_toggle(ids!(toggle_right)).toggled(&actions) {
+            let expanded = self.ui.mp_dock_toggle(ids!(toggle_right)).is_expanded();
+            self.ui.mp_dock_area(ids!(dock_demo)).set_dock_visible(cx, MpDockPlacement::Right, expanded);
+        }
+        if self.ui.mp_dock_toggle(ids!(toggle_bottom)).toggled(&actions) {
+            let expanded = self.ui.mp_dock_toggle(ids!(toggle_bottom)).is_expanded();
+            self.ui.mp_dock_area(ids!(dock_demo)).set_dock_visible(cx, MpDockPlacement::Bottom, expanded);
         }
 
         // Handle counter button
