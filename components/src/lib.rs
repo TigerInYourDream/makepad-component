@@ -118,6 +118,10 @@ pub mod text;
 #[path ="./tooltip/tooltip.rs"]
 pub mod tooltip;
 
+#[cfg(feature = "Dock")]
+#[path ="./dock/dock.rs"]
+pub mod dock;
+
 #[cfg(feature = "Space")]
 #[path ="./space/space.rs"]
 pub mod space;
@@ -186,4 +190,6 @@ pub fn live_design(cx: &mut Cx) {
     tooltip::live_design(cx);
     #[cfg(feature = "Space")]
     space::live_design(cx);
+    #[cfg(feature = "Dock")]
+    dock::live_design(cx);
 }
