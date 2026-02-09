@@ -8,6 +8,15 @@ pub enum MpDockSplitAxis {
     Vertical,
 }
 
+#[derive(Live, LiveHook, LiveRegister, Clone, Copy, Debug, PartialEq)]
+#[live_ignore]
+pub enum MpDockPlacement {
+    #[pick]
+    Left,
+    Right,
+    Bottom,
+}
+
 live_design! {
     use link::theme::*;
     use link::shaders::*;
@@ -212,6 +221,108 @@ live_design! {
         content = <View> {
             width: Fill
             height: Fill
+        }
+    }
+
+    // ============================================================
+    // MpDockResizeHandle - Thin draggable bar between dock regions
+    // ============================================================
+
+    pub MpDockResizeHandle = {{MpDockResizeHandle}} {
+        width: 4, height: Fill
+        show_bg: true
+        draw_bg: {
+            instance hover: 0.0
+            instance down: 0.0
+            instance handle_color: #00000000
+            instance handle_color_hover: (PRIMARY)
+
+            fn pixel(self) -> vec4 {
+                let hover_amount = max(self.hover, self.down);
+                let col = mix(self.handle_color, self.handle_color_hover, hover_amount);
+                return col;
+            }
+        }
+        animator: {
+            hover = {
+                default: off
+                off = {
+                    from: { all: Forward { duration: 0.15 } }
+                    apply: { draw_bg: { hover: 0.0 } }
+                }
+                on = {
+                    from: { all: Forward { duration: 0.1 } }
+                    apply: { draw_bg: { hover: 1.0 } }
+                }
+            }
+            down = {
+                default: off
+                off = {
+                    from: { all: Forward { duration: 0.1 } }
+                    apply: { draw_bg: { down: 0.0 } }
+                }
+                on = {
+                    from: { all: Forward { duration: 0.05 } }
+                    apply: { draw_bg: { down: 1.0 } }
+                }
+            }
+        }
+    }
+
+    // ============================================================
+    // MpDockArea - Top-level dock layout with collapsible side docks
+    // ============================================================
+
+    pub MpDockArea = {{MpDockArea}} {
+        width: Fill
+        height: Fill
+        flow: Down
+
+        main_row = <View> {
+            width: Fill
+            height: Fill
+            flow: Right
+
+            left_dock = <View> {
+                width: 240
+                height: Fill
+                visible: false
+            }
+
+            left_handle = <MpDockResizeHandle> {
+                width: 4, height: Fill
+                visible: false
+                cursor: ColResize
+            }
+
+            center = <View> {
+                width: Fill
+                height: Fill
+            }
+
+            right_handle = <MpDockResizeHandle> {
+                width: 4, height: Fill
+                visible: false
+                cursor: ColResize
+            }
+
+            right_dock = <View> {
+                width: 240
+                height: Fill
+                visible: false
+            }
+        }
+
+        bottom_handle = <MpDockResizeHandle> {
+            width: Fill, height: 4
+            visible: false
+            cursor: RowResize
+        }
+
+        bottom_dock = <View> {
+            width: Fill
+            height: 200
+            visible: false
         }
     }
 }
@@ -706,5 +817,279 @@ impl MpDockTabPanelRef {
             }
         }
         None
+    }
+}
+
+// ============================================================
+// MpDockResizeHandle
+// ============================================================
+
+#[derive(Live, LiveHook, Widget)]
+pub struct MpDockResizeHandle {
+    #[deref] view: View,
+    #[animator] animator: Animator,
+}
+
+impl Widget for MpDockResizeHandle {
+    fn handle_event(&mut self, cx: &mut Cx, event: &Event, scope: &mut Scope) {
+        self.view.handle_event(cx, event, scope);
+        if self.animator_handle_event(cx, event).must_redraw() {
+            self.redraw(cx);
+        }
+        // Event handling is done by MpDockArea which checks hits on this handle's area
+    }
+    fn draw_walk(&mut self, cx: &mut Cx2d, scope: &mut Scope, walk: Walk) -> DrawStep {
+        self.view.draw_walk(cx, scope, walk)
+    }
+}
+
+// ============================================================
+// MpDockArea
+// ============================================================
+
+#[derive(Clone, Debug, DefaultNone)]
+pub enum MpDockAreaAction {
+    None,
+    DockToggled { placement: MpDockPlacement, visible: bool },
+    DockResized { placement: MpDockPlacement, size: f64 },
+}
+
+#[derive(Live, Widget)]
+pub struct MpDockArea {
+    #[deref] view: View,
+
+    // Dock sizes
+    #[live(240.0)] left_width: f64,
+    #[live(240.0)] right_width: f64,
+    #[live(200.0)] bottom_height: f64,
+    #[live(100.0)] min_dock_size: f64,
+    #[live(800.0)] max_dock_size: f64,
+
+    // Visibility state
+    #[rust] left_visible: bool,
+    #[rust] right_visible: bool,
+    #[rust] bottom_visible: bool,
+
+    // Resize drag state
+    #[rust] dragging: Option<MpDockPlacement>,
+    #[rust] drag_start_pos: f64,
+    #[rust] drag_start_size: f64,
+}
+
+impl LiveHook for MpDockArea {
+    fn after_apply(&mut self, cx: &mut Cx, _apply: &mut Apply, _index: usize, _nodes: &[LiveNode]) {
+        self.sync_dock_layout(cx);
+    }
+}
+
+impl MpDockArea {
+    fn sync_dock_layout(&mut self, cx: &mut Cx) {
+        // Left dock
+        self.view.view(ids!(main_row.left_dock)).apply_over(cx, live! {
+            visible: (self.left_visible),
+            width: (self.left_width),
+        });
+        self.view.view(ids!(main_row.left_handle)).apply_over(cx, live! {
+            visible: (self.left_visible),
+        });
+
+        // Right dock
+        self.view.view(ids!(main_row.right_dock)).apply_over(cx, live! {
+            visible: (self.right_visible),
+            width: (self.right_width),
+        });
+        self.view.view(ids!(main_row.right_handle)).apply_over(cx, live! {
+            visible: (self.right_visible),
+        });
+
+        // Bottom dock
+        self.view.view(ids!(bottom_dock)).apply_over(cx, live! {
+            visible: (self.bottom_visible),
+            height: (self.bottom_height),
+        });
+        self.view.view(ids!(bottom_handle)).apply_over(cx, live! {
+            visible: (self.bottom_visible),
+        });
+    }
+
+    pub fn toggle_dock(&mut self, cx: &mut Cx, placement: MpDockPlacement) {
+        match placement {
+            MpDockPlacement::Left => self.left_visible = !self.left_visible,
+            MpDockPlacement::Right => self.right_visible = !self.right_visible,
+            MpDockPlacement::Bottom => self.bottom_visible = !self.bottom_visible,
+        }
+        self.sync_dock_layout(cx);
+        self.redraw(cx);
+    }
+
+    pub fn set_dock_visible(&mut self, cx: &mut Cx, placement: MpDockPlacement, visible: bool) {
+        match placement {
+            MpDockPlacement::Left => self.left_visible = visible,
+            MpDockPlacement::Right => self.right_visible = visible,
+            MpDockPlacement::Bottom => self.bottom_visible = visible,
+        }
+        self.sync_dock_layout(cx);
+        self.redraw(cx);
+    }
+
+    pub fn is_dock_visible(&self, placement: MpDockPlacement) -> bool {
+        match placement {
+            MpDockPlacement::Left => self.left_visible,
+            MpDockPlacement::Right => self.right_visible,
+            MpDockPlacement::Bottom => self.bottom_visible,
+        }
+    }
+
+    fn clamp_dock_size(&self, size: f64) -> f64 {
+        size.clamp(self.min_dock_size, self.max_dock_size)
+    }
+}
+
+impl Widget for MpDockArea {
+    fn handle_event(&mut self, cx: &mut Cx, event: &Event, scope: &mut Scope) {
+        self.view.handle_event(cx, event, scope);
+
+        // Handle resize drag on left_handle
+        let left_handle_area = self.view.view(ids!(main_row.left_handle)).area();
+        match event.hits(cx, left_handle_area) {
+            Hit::FingerHoverIn(_) => {
+                cx.set_cursor(MouseCursor::ColResize);
+            }
+            Hit::FingerDown(fe) => {
+                self.dragging = Some(MpDockPlacement::Left);
+                self.drag_start_pos = fe.abs.x;
+                self.drag_start_size = self.left_width;
+                cx.set_cursor(MouseCursor::ColResize);
+            }
+            Hit::FingerMove(fe) => {
+                if matches!(self.dragging, Some(MpDockPlacement::Left)) {
+                    let delta = fe.abs.x - self.drag_start_pos;
+                    let new_size = self.clamp_dock_size(self.drag_start_size + delta);
+                    if (new_size - self.left_width).abs() > 1.0 {
+                        self.left_width = new_size;
+                        self.sync_dock_layout(cx);
+                        self.redraw(cx);
+                    }
+                }
+            }
+            Hit::FingerUp(_) => {
+                if matches!(self.dragging, Some(MpDockPlacement::Left)) {
+                    self.dragging = None;
+                    cx.widget_action(
+                        self.widget_uid(),
+                        &scope.path,
+                        MpDockAreaAction::DockResized {
+                            placement: MpDockPlacement::Left,
+                            size: self.left_width,
+                        },
+                    );
+                }
+            }
+            _ => {}
+        }
+
+        // Handle resize drag on right_handle (delta is reversed: drag left = bigger)
+        let right_handle_area = self.view.view(ids!(main_row.right_handle)).area();
+        match event.hits(cx, right_handle_area) {
+            Hit::FingerHoverIn(_) => {
+                cx.set_cursor(MouseCursor::ColResize);
+            }
+            Hit::FingerDown(fe) => {
+                self.dragging = Some(MpDockPlacement::Right);
+                self.drag_start_pos = fe.abs.x;
+                self.drag_start_size = self.right_width;
+                cx.set_cursor(MouseCursor::ColResize);
+            }
+            Hit::FingerMove(fe) => {
+                if matches!(self.dragging, Some(MpDockPlacement::Right)) {
+                    let delta = self.drag_start_pos - fe.abs.x;
+                    let new_size = self.clamp_dock_size(self.drag_start_size + delta);
+                    if (new_size - self.right_width).abs() > 1.0 {
+                        self.right_width = new_size;
+                        self.sync_dock_layout(cx);
+                        self.redraw(cx);
+                    }
+                }
+            }
+            Hit::FingerUp(_) => {
+                if matches!(self.dragging, Some(MpDockPlacement::Right)) {
+                    self.dragging = None;
+                    cx.widget_action(
+                        self.widget_uid(),
+                        &scope.path,
+                        MpDockAreaAction::DockResized {
+                            placement: MpDockPlacement::Right,
+                            size: self.right_width,
+                        },
+                    );
+                }
+            }
+            _ => {}
+        }
+
+        // Handle resize drag on bottom_handle (vertical: drag up = bigger)
+        let bottom_handle_area = self.view.view(ids!(bottom_handle)).area();
+        match event.hits(cx, bottom_handle_area) {
+            Hit::FingerHoverIn(_) => {
+                cx.set_cursor(MouseCursor::RowResize);
+            }
+            Hit::FingerDown(fe) => {
+                self.dragging = Some(MpDockPlacement::Bottom);
+                self.drag_start_pos = fe.abs.y;
+                self.drag_start_size = self.bottom_height;
+                cx.set_cursor(MouseCursor::RowResize);
+            }
+            Hit::FingerMove(fe) => {
+                if matches!(self.dragging, Some(MpDockPlacement::Bottom)) {
+                    let delta = self.drag_start_pos - fe.abs.y;
+                    let new_size = self.clamp_dock_size(self.drag_start_size + delta);
+                    if (new_size - self.bottom_height).abs() > 1.0 {
+                        self.bottom_height = new_size;
+                        self.sync_dock_layout(cx);
+                        self.redraw(cx);
+                    }
+                }
+            }
+            Hit::FingerUp(_) => {
+                if matches!(self.dragging, Some(MpDockPlacement::Bottom)) {
+                    self.dragging = None;
+                    cx.widget_action(
+                        self.widget_uid(),
+                        &scope.path,
+                        MpDockAreaAction::DockResized {
+                            placement: MpDockPlacement::Bottom,
+                            size: self.bottom_height,
+                        },
+                    );
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn draw_walk(&mut self, cx: &mut Cx2d, scope: &mut Scope, walk: Walk) -> DrawStep {
+        self.view.draw_walk(cx, scope, walk)
+    }
+}
+
+impl MpDockAreaRef {
+    pub fn toggle_dock(&self, cx: &mut Cx, placement: MpDockPlacement) {
+        if let Some(mut inner) = self.borrow_mut() {
+            inner.toggle_dock(cx, placement);
+        }
+    }
+
+    pub fn set_dock_visible(&self, cx: &mut Cx, placement: MpDockPlacement, visible: bool) {
+        if let Some(mut inner) = self.borrow_mut() {
+            inner.set_dock_visible(cx, placement, visible);
+        }
+    }
+
+    pub fn is_dock_visible(&self, placement: MpDockPlacement) -> bool {
+        if let Some(inner) = self.borrow() {
+            inner.is_dock_visible(placement)
+        } else {
+            false
+        }
     }
 }
