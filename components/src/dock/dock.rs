@@ -85,6 +85,135 @@ live_design! {
 
         second = <View> { width: Fill, height: Fill }
     }
+
+    // ============================================================
+    // MpDockTab - Individual tab button for dock tab panel
+    // ============================================================
+
+    pub MpDockTab = {{MpDockTab}} {
+        width: Fit
+        height: Fit
+        align: { x: 0.5, y: 0.5 }
+        padding: { left: 12, right: 12, top: 6, bottom: 6 }
+
+        text: ""
+
+        draw_bg: {
+            instance hover: 0.0
+            instance selected: 0.0
+            instance bg_color: #00000000
+            instance bg_color_hover: #0000000D
+            instance bg_color_selected: (SURFACE)
+            instance border_color_selected: (PRIMARY)
+
+            fn pixel(self) -> vec4 {
+                let sdf = Sdf2d::viewport(self.pos * self.rect_size);
+
+                let bg = mix(self.bg_color, self.bg_color_selected, self.selected);
+                let bg_final = mix(bg, self.bg_color_hover, self.hover * (1.0 - self.selected));
+
+                sdf.box(0.0, 0.0, self.rect_size.x, self.rect_size.y, 4.0);
+                sdf.fill_keep(bg_final);
+
+                // Bottom border for selected tab
+                if self.selected > 0.5 {
+                    sdf.rect(0.0, self.rect_size.y - 2.0, self.rect_size.x, 2.0);
+                    sdf.fill(self.border_color_selected);
+                }
+
+                return sdf.result;
+            }
+        }
+
+        draw_text: {
+            instance hover: 0.0
+            instance selected: 0.0
+            uniform color: #64748b
+            uniform color_hover: #334155
+            uniform color_selected: #0f172a
+            text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
+
+            fn get_color(self) -> vec4 {
+                let c = mix(self.color, self.color_selected, self.selected);
+                return mix(c, self.color_hover, self.hover * (1.0 - self.selected));
+            }
+        }
+
+        animator: {
+            hover = {
+                default: off
+                off = {
+                    from: { all: Forward { duration: 0.15 } }
+                    apply: {
+                        draw_bg: { hover: 0.0 }
+                        draw_text: { hover: 0.0 }
+                    }
+                }
+                on = {
+                    cursor: Hand
+                    from: { all: Forward { duration: 0.1 } }
+                    apply: {
+                        draw_bg: { hover: 1.0 }
+                        draw_text: { hover: 1.0 }
+                    }
+                }
+            }
+            selected = {
+                default: off
+                off = {
+                    from: { all: Forward { duration: 0.15 } }
+                    apply: {
+                        draw_bg: { selected: 0.0 }
+                        draw_text: { selected: 0.0 }
+                    }
+                }
+                on = {
+                    from: { all: Forward { duration: 0.1 } }
+                    apply: {
+                        draw_bg: { selected: 1.0 }
+                        draw_text: { selected: 1.0 }
+                    }
+                }
+            }
+        }
+    }
+
+    // ============================================================
+    // MpDockTabPanel - Tabbed container with tab bar and content
+    // ============================================================
+
+    pub MpDockTabPanel = {{MpDockTabPanel}} {
+        width: Fill
+        height: Fill
+        flow: Down
+
+        tab_bar = <View> {
+            width: Fill
+            height: Fit
+            flow: Right
+            padding: { left: 4, top: 2, bottom: 0 }
+            spacing: 2
+            show_bg: true
+            draw_bg: {
+                instance bar_color: (SURFACE)
+                instance border_color: (BORDER)
+                fn pixel(self) -> vec4 {
+                    let sdf = Sdf2d::viewport(self.pos * self.rect_size);
+                    sdf.rect(0.0, 0.0, self.rect_size.x, self.rect_size.y);
+                    sdf.fill_keep(self.bar_color);
+                    // Bottom border
+                    sdf.rect(0.0, self.rect_size.y - 1.0, self.rect_size.x, 1.0);
+                    sdf.fill(self.border_color);
+                    return sdf.result;
+                }
+            }
+        }
+
+        content = <View> {
+            width: Fill
+            height: Fill
+        }
+    }
 }
 
 // ============================================================
@@ -301,5 +430,281 @@ impl Widget for MpDockSplitter {
         }
 
         self.view.draw_walk(cx, scope, walk)
+    }
+}
+
+// ============================================================
+// MpDockTab - Individual tab button
+// ============================================================
+
+#[derive(Clone, Debug, DefaultNone)]
+pub enum MpDockTabAction {
+    Clicked,
+    None,
+}
+
+#[derive(Live, LiveHook, Widget)]
+pub struct MpDockTab {
+    #[redraw]
+    #[live]
+    draw_bg: DrawQuad,
+
+    #[live]
+    draw_text: DrawText,
+
+    #[walk]
+    walk: Walk,
+
+    #[layout]
+    layout: Layout,
+
+    #[live]
+    text: ArcStringMut,
+
+    #[animator]
+    animator: Animator,
+
+    #[rust]
+    selected: bool,
+}
+
+impl Widget for MpDockTab {
+    fn handle_event(&mut self, cx: &mut Cx, event: &Event, scope: &mut Scope) {
+        self.animator_handle_event(cx, event);
+
+        match event.hits(cx, self.draw_bg.area()) {
+            Hit::FingerHoverIn(_) => {
+                cx.set_cursor(MouseCursor::Hand);
+                if !self.selected {
+                    self.animator_play(cx, ids!(hover.on));
+                }
+            }
+            Hit::FingerHoverOut(_) => {
+                if !self.selected {
+                    self.animator_play(cx, ids!(hover.off));
+                }
+            }
+            Hit::FingerDown(_) => {
+                self.draw_bg.apply_over(cx, live! { hover: 0.0 });
+                self.draw_text.apply_over(cx, live! { hover: 0.0 });
+                cx.widget_action(self.widget_uid(), &scope.path, MpDockTabAction::Clicked);
+            }
+            _ => {}
+        }
+    }
+
+    fn draw_walk(&mut self, cx: &mut Cx2d, _scope: &mut Scope, walk: Walk) -> DrawStep {
+        if self.selected {
+            self.draw_bg.apply_over(cx, live! { selected: 1.0 });
+            self.draw_text.apply_over(cx, live! { selected: 1.0 });
+        }
+
+        self.draw_bg.begin(cx, walk, self.layout);
+        self.draw_text
+            .draw_walk(cx, Walk::fit(), Align::default(), self.text.as_ref());
+        self.draw_bg.end(cx);
+        DrawStep::done()
+    }
+
+    fn text(&self) -> String {
+        self.text.as_ref().to_string()
+    }
+
+    fn set_text(&mut self, cx: &mut Cx, text: &str) {
+        self.text.as_mut_empty().push_str(text);
+        self.redraw(cx);
+    }
+}
+
+impl MpDockTab {
+    pub fn set_selected(&mut self, cx: &mut Cx, selected: bool) {
+        if self.selected != selected {
+            self.selected = selected;
+            let val = if selected { 1.0f64 } else { 0.0f64 };
+            self.draw_bg.apply_over(cx, live! { selected: (val) });
+            self.draw_text.apply_over(cx, live! { selected: (val) });
+            self.redraw(cx);
+        }
+    }
+
+    pub fn is_selected(&self) -> bool {
+        self.selected
+    }
+}
+
+impl MpDockTabRef {
+    pub fn clicked(&self, actions: &Actions) -> bool {
+        if let Some(item) = actions.find_widget_action(self.widget_uid()) {
+            if let MpDockTabAction::Clicked = item.cast() {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn set_selected(&self, cx: &mut Cx, selected: bool) {
+        if let Some(mut inner) = self.borrow_mut() {
+            inner.set_selected(cx, selected);
+        }
+    }
+
+    pub fn is_selected(&self) -> bool {
+        if let Some(inner) = self.borrow() {
+            inner.is_selected()
+        } else {
+            false
+        }
+    }
+}
+
+// ============================================================
+// MpDockTabPanel - Tabbed container with tab switching
+// ============================================================
+
+#[derive(Clone, Debug, DefaultNone)]
+pub enum MpDockTabPanelAction {
+    None,
+    TabSelected { index: usize },
+}
+
+#[derive(Live, Widget)]
+pub struct MpDockTabPanel {
+    #[deref]
+    view: View,
+
+    #[rust]
+    active_tab: usize,
+
+    #[rust]
+    tab_uids: Vec<WidgetUid>,
+}
+
+impl LiveHook for MpDockTabPanel {
+    fn after_apply(&mut self, cx: &mut Cx, _apply: &mut Apply, _index: usize, _nodes: &[LiveNode]) {
+        self.collect_tab_uids();
+        self.sync_tab_visibility(cx);
+    }
+}
+
+impl MpDockTabPanel {
+    /// Collect widget UIDs of all MpDockTab children in the tab_bar
+    fn collect_tab_uids(&mut self) {
+        self.tab_uids.clear();
+        let mut uids = Vec::new();
+        let tab_bar_ref = self.view.widget(&[live_id!(tab_bar)]);
+        if let Some(mut tab_bar_view) = tab_bar_ref.borrow_mut::<View>() {
+            let count = tab_bar_view.child_count();
+            for i in 0..count {
+                if let Some(child) = tab_bar_view.child_at_index(i) {
+                    if child.borrow::<MpDockTab>().is_some() {
+                        uids.push(child.widget_uid());
+                    }
+                }
+            }
+            drop(tab_bar_view);
+        }
+        self.tab_uids = uids;
+    }
+
+    /// Synchronize tab selected states and content visibility based on active_tab
+    fn sync_tab_visibility(&self, cx: &mut Cx) {
+        // Update tab selected states
+        let tab_bar_ref = self.view.widget(&[live_id!(tab_bar)]);
+        if let Some(mut tab_bar_view) = tab_bar_ref.borrow_mut::<View>() {
+            let count = tab_bar_view.child_count();
+            let mut tab_index = 0usize;
+            for i in 0..count {
+                if let Some(child) = tab_bar_view.child_at_index(i) {
+                    if let Some(mut tab) = child.borrow_mut::<MpDockTab>() {
+                        tab.set_selected(cx, tab_index == self.active_tab);
+                        tab_index += 1;
+                    }
+                }
+            }
+            drop(tab_bar_view);
+        }
+
+        // Update content visibility
+        let content_ref = self.view.widget(&[live_id!(content)]);
+        if let Some(mut content_view) = content_ref.borrow_mut::<View>() {
+            let count = content_view.child_count();
+            for i in 0..count {
+                if let Some(child) = content_view.child_at_index(i) {
+                    let visible = i == self.active_tab;
+                    child.apply_over(cx, live! { visible: (visible) });
+                }
+            }
+            drop(content_view);
+        };
+    }
+
+    /// Set the active tab by index
+    pub fn set_active_tab(&mut self, cx: &mut Cx, index: usize) {
+        if self.active_tab != index {
+            self.active_tab = index;
+            self.sync_tab_visibility(cx);
+            self.redraw(cx);
+        }
+    }
+
+    /// Get the current active tab index
+    pub fn active_tab(&self) -> usize {
+        self.active_tab
+    }
+}
+
+impl Widget for MpDockTabPanel {
+    fn handle_event(&mut self, cx: &mut Cx, event: &Event, scope: &mut Scope) {
+        let actions = cx.capture_actions(|cx| {
+            self.view.handle_event(cx, event, scope);
+        });
+
+        // Check if any dock tab was clicked by matching against stored UIDs
+        for (tab_index, tab_uid) in self.tab_uids.iter().enumerate() {
+            if let Some(item) = actions.find_widget_action(*tab_uid) {
+                if let MpDockTabAction::Clicked = item.cast() {
+                    if self.active_tab != tab_index {
+                        self.active_tab = tab_index;
+                        self.sync_tab_visibility(cx);
+                        self.redraw(cx);
+                        cx.widget_action(
+                            self.widget_uid(),
+                            &scope.path,
+                            MpDockTabPanelAction::TabSelected { index: tab_index },
+                        );
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    fn draw_walk(&mut self, cx: &mut Cx2d, scope: &mut Scope, walk: Walk) -> DrawStep {
+        self.view.draw_walk(cx, scope, walk)
+    }
+}
+
+impl MpDockTabPanelRef {
+    pub fn set_active_tab(&self, cx: &mut Cx, index: usize) {
+        if let Some(mut inner) = self.borrow_mut() {
+            inner.set_active_tab(cx, index);
+        }
+    }
+
+    pub fn active_tab(&self) -> usize {
+        if let Some(inner) = self.borrow() {
+            inner.active_tab()
+        } else {
+            0
+        }
+    }
+
+    pub fn tab_selected(&self, actions: &Actions) -> Option<usize> {
+        if let Some(item) = actions.find_widget_action(self.widget_uid()) {
+            if let MpDockTabPanelAction::TabSelected { index } = item.cast() {
+                return Some(index);
+            }
+        }
+        None
     }
 }
