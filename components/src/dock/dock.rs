@@ -325,6 +325,84 @@ live_design! {
             visible: false
         }
     }
+
+    // ============================================================
+    // MpDockToggle - Toggle button for collapsing/expanding docks
+    // ============================================================
+
+    pub MpDockToggle = {{MpDockToggle}} {
+        width: 20, height: 48
+        cursor: Hand
+        show_bg: true
+
+        draw_bg: {
+            instance hover: 0.0
+            instance expanded: 0.0
+            instance direction: 0.0
+
+            instance bg_color: (SURFACE)
+            instance bg_color_hover: #e2e8f0
+            instance arrow_color: #64748b
+            instance arrow_color_hover: #334155
+
+            fn pixel(self) -> vec4 {
+                let sdf = Sdf2d::viewport(self.pos * self.rect_size);
+
+                // Background rounded rect
+                sdf.box(0.0, 0.0, self.rect_size.x, self.rect_size.y, 4.0);
+                let bg = mix(self.bg_color, self.bg_color_hover, self.hover);
+                sdf.fill_keep(bg);
+
+                // Arrow icon
+                let cx = self.rect_size.x * 0.5;
+                let cy = self.rect_size.y * 0.5;
+                let s = 4.0;
+                let arrow_col = mix(self.arrow_color, self.arrow_color_hover, self.hover);
+
+                if self.direction < 0.5 {
+                    // Left dock: collapsed=arrow right, expanded=arrow left
+                    let flip = mix(1.0, -1.0, self.expanded);
+                    sdf.move_to(cx - s * flip, cy - s);
+                    sdf.line_to(cx + s * flip, cy);
+                    sdf.line_to(cx - s * flip, cy + s);
+                    sdf.close_path();
+                    sdf.fill(arrow_col);
+                } else if self.direction < 1.5 {
+                    // Right dock: collapsed=arrow left, expanded=arrow right
+                    let flip = mix(-1.0, 1.0, self.expanded);
+                    sdf.move_to(cx - s * flip, cy - s);
+                    sdf.line_to(cx + s * flip, cy);
+                    sdf.line_to(cx - s * flip, cy + s);
+                    sdf.close_path();
+                    sdf.fill(arrow_col);
+                } else {
+                    // Bottom dock: collapsed=arrow up, expanded=arrow down
+                    let flip = mix(-1.0, 1.0, self.expanded);
+                    sdf.move_to(cx - s, cy - s * flip);
+                    sdf.line_to(cx, cy + s * flip);
+                    sdf.line_to(cx + s, cy - s * flip);
+                    sdf.close_path();
+                    sdf.fill(arrow_col);
+                }
+
+                return sdf.result;
+            }
+        }
+
+        animator: {
+            hover = {
+                default: off
+                off = {
+                    from: { all: Forward { duration: 0.15 } }
+                    apply: { draw_bg: { hover: 0.0 } }
+                }
+                on = {
+                    from: { all: Forward { duration: 0.1 } }
+                    apply: { draw_bg: { hover: 1.0 } }
+                }
+            }
+        }
+    }
 }
 
 // ============================================================
@@ -1088,6 +1166,113 @@ impl MpDockAreaRef {
     pub fn is_dock_visible(&self, placement: MpDockPlacement) -> bool {
         if let Some(inner) = self.borrow() {
             inner.is_dock_visible(placement)
+        } else {
+            false
+        }
+    }
+}
+
+// ============================================================
+// MpDockToggle - Toggle button for collapsing/expanding docks
+// ============================================================
+
+#[derive(Clone, Debug, DefaultNone)]
+pub enum MpDockToggleAction {
+    None,
+    Toggled,
+}
+
+#[derive(Live, Widget)]
+pub struct MpDockToggle {
+    #[deref] view: View,
+    #[live] placement: MpDockPlacement,
+    #[live] expanded: bool,
+    #[animator] animator: Animator,
+}
+
+impl LiveHook for MpDockToggle {
+    fn after_apply(&mut self, cx: &mut Cx, _apply: &mut Apply, _index: usize, _nodes: &[LiveNode]) {
+        self.update_shader_state(cx);
+    }
+}
+
+impl MpDockToggle {
+    fn update_shader_state(&mut self, cx: &mut Cx) {
+        let direction = match self.placement {
+            MpDockPlacement::Left => 0.0f64,
+            MpDockPlacement::Right => 1.0f64,
+            MpDockPlacement::Bottom => 2.0f64,
+        };
+        let expanded_val = if self.expanded { 1.0f64 } else { 0.0f64 };
+        self.view.apply_over(cx, live! {
+            draw_bg: {
+                direction: (direction),
+                expanded: (expanded_val),
+            }
+        });
+    }
+
+    pub fn set_expanded(&mut self, cx: &mut Cx, expanded: bool) {
+        self.expanded = expanded;
+        self.update_shader_state(cx);
+        self.redraw(cx);
+    }
+
+    pub fn is_expanded(&self) -> bool {
+        self.expanded
+    }
+}
+
+impl Widget for MpDockToggle {
+    fn handle_event(&mut self, cx: &mut Cx, event: &Event, scope: &mut Scope) {
+        if self.animator_handle_event(cx, event).must_redraw() {
+            self.redraw(cx);
+        }
+        match event.hits(cx, self.view.area()) {
+            Hit::FingerHoverIn(_) => {
+                self.animator_play(cx, ids!(hover.on));
+            }
+            Hit::FingerHoverOut(_) => {
+                self.animator_play(cx, ids!(hover.off));
+            }
+            Hit::FingerDown(_) => {
+                self.expanded = !self.expanded;
+                self.update_shader_state(cx);
+                cx.widget_action(self.widget_uid(), &scope.path, MpDockToggleAction::Toggled);
+            }
+            _ => {}
+        }
+    }
+
+    fn draw_walk(&mut self, cx: &mut Cx2d, scope: &mut Scope, walk: Walk) -> DrawStep {
+        self.view.draw_walk(cx, scope, walk)
+    }
+}
+
+pub trait MpDockToggleRefExt {
+    fn set_expanded(&self, cx: &mut Cx, expanded: bool);
+    fn is_expanded(&self) -> bool;
+    fn toggled(&self, actions: &Actions) -> bool;
+}
+
+impl MpDockToggleRefExt for MpDockToggleRef {
+    fn set_expanded(&self, cx: &mut Cx, expanded: bool) {
+        if let Some(mut inner) = self.borrow_mut() {
+            inner.set_expanded(cx, expanded);
+        }
+    }
+
+    fn is_expanded(&self) -> bool {
+        if let Some(inner) = self.borrow() {
+            inner.is_expanded()
+        } else {
+            false
+        }
+    }
+
+    fn toggled(&self, actions: &Actions) -> bool {
+        if let Some(item) = actions.find_widget_action(self.widget_uid()) {
+            matches!(item.cast(), MpDockToggleAction::Toggled)
         } else {
             false
         }
