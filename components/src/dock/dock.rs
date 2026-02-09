@@ -622,6 +622,38 @@ impl Widget for MpDockSplitter {
     }
 }
 
+pub trait MpDockSplitterRefExt {
+    fn set_split_ratio(&self, cx: &mut Cx, ratio: f64);
+    fn split_ratio(&self) -> f64;
+    fn ratio_changed(&self, actions: &Actions) -> Option<f64>;
+}
+
+impl MpDockSplitterRefExt for MpDockSplitterRef {
+    fn set_split_ratio(&self, cx: &mut Cx, ratio: f64) {
+        if let Some(mut inner) = self.borrow_mut() {
+            inner.split_ratio = ratio.clamp(0.0, 1.0);
+            inner.redraw(cx);
+        }
+    }
+
+    fn split_ratio(&self) -> f64 {
+        if let Some(inner) = self.borrow() {
+            inner.split_ratio
+        } else {
+            0.5
+        }
+    }
+
+    fn ratio_changed(&self, actions: &Actions) -> Option<f64> {
+        if let Some(item) = actions.find_widget_action(self.widget_uid()) {
+            if let MpDockSplitterAction::SplitRatioChanged { ratio } = item.cast() {
+                return Some(ratio);
+            }
+        }
+        None
+    }
+}
+
 // ============================================================
 // MpDockTab - Individual tab button
 // ============================================================
