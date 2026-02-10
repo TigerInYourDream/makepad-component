@@ -30,9 +30,16 @@ pub mod card;
 #[path ="./checkbox/checkbox.rs"]
 pub mod checkbox;
 
+#[cfg(feature = "Calendar")]
+#[path ="./calendar/calendar.rs"]
+pub mod calendar;
+
 #[cfg(feature = "ColorPicker")]
 #[path ="./color_picker/color_picker.rs"]
 pub mod color_picker;
+#[cfg(feature = "ColorPicker")]
+#[path ="./fold_header_dropdown/fold_header_dropdown.rs"]
+pub mod fold_header_dropdown;
 
 #[cfg(feature = "Divider")]
 #[path ="./divider/divider.rs"]
@@ -65,6 +72,10 @@ pub mod link;
 #[cfg(feature = "List")]
 #[path ="./list/list.rs"]
 pub mod list;
+
+#[cfg(feature = "Menu")]
+#[path ="./menu/menu.rs"]
+pub mod menu;
 
 #[cfg(feature = "Modal")]
 #[path ="./modal/modal.rs"]
@@ -118,6 +129,10 @@ pub mod text;
 #[path ="./tooltip/tooltip.rs"]
 pub mod tooltip;
 
+#[cfg(feature = "Table")]
+#[path ="./table/table.rs"]
+pub mod table;
+
 #[cfg(feature = "Dock")]
 #[path ="./dock/dock.rs"]
 pub mod dock;
@@ -144,6 +159,10 @@ pub fn live_design(cx: &mut Cx) {
     card::live_design(cx);
     #[cfg(feature = "Checkbox")]
     checkbox::live_design(cx);
+    #[cfg(feature = "Calendar")]
+    calendar::live_design(cx);
+    #[cfg(feature = "ColorPicker")]
+    fold_header_dropdown::live_design(cx);
     #[cfg(feature = "ColorPicker")]
     color_picker::live_design(cx);
     #[cfg(feature = "Divider")]
@@ -162,6 +181,8 @@ pub fn live_design(cx: &mut Cx) {
     link::live_design(cx);
     #[cfg(feature = "List")]
     list::live_design(cx);
+    #[cfg(feature = "Menu")]
+    menu::live_design(cx);
     #[cfg(feature = "Modal")]
     modal::live_design(cx);
     #[cfg(feature = "Notification")]
@@ -190,6 +211,8 @@ pub fn live_design(cx: &mut Cx) {
     tooltip::live_design(cx);
     #[cfg(feature = "Space")]
     space::live_design(cx);
+    #[cfg(feature = "Table")]
+    table::live_design(cx);
     #[cfg(feature = "Dock")]
     dock::live_design(cx);
 }

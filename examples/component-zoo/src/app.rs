@@ -2,10 +2,12 @@ use makepad_widgets::*;
 use makepad_components::avatar::MpAvatarWidgetRefExt;
 use makepad_components::badge::MpBadgeWidgetRefExt;
 use makepad_components::button::MpButtonWidgetRefExt;
+use makepad_components::calendar::MpCalendarAction;
 use makepad_components::card::MpCardAction;
 use makepad_components::checkbox::MpCheckboxWidgetRefExt;
 use makepad_components::color_picker::MpColorPickerWidgetRefExt;
 use makepad_components::drawer::MpDrawerWidgetWidgetRefExt;
+use makepad_components::menu::MpMenuItemWidgetRefExt;
 use makepad_components::modal::MpModalAction;
 use makepad_components::modal::MpModalWidgetWidgetRefExt;
 use makepad_components::notification::MpNotificationWidgetWidgetRefExt;
@@ -32,6 +34,7 @@ live_design! {
     use makepad_components::avatar::*;
     use makepad_components::badge::*;
     use makepad_components::button::*;
+    use makepad_components::calendar::*;
     use makepad_components::card::*;
     use makepad_components::checkbox::*;
     use makepad_components::color_picker::*;
@@ -43,6 +46,7 @@ live_design! {
     use makepad_components::layout::*;
     use makepad_components::link::*;
     use makepad_components::list::*;
+    use makepad_components::menu::*;
     use makepad_components::modal::*;
     use makepad_components::notification::*;
     use makepad_components::page_flip::*;
@@ -58,13 +62,8 @@ live_design! {
     use makepad_components::text::*;
     use link::theme_colors::*;
     use makepad_components::tooltip::*;
-<<<<<<< HEAD
-||||||| parent of 73abf43 (feat(dock): add dock demo to component zoo)
-    use makepad_components::table::*;
-=======
     use makepad_components::table::*;
     use makepad_components::dock::*;
->>>>>>> 73abf43 (feat(dock): add dock demo to component zoo)
 
     // ============================================================
     // Section Header Component
@@ -184,6 +183,101 @@ live_design! {
 
                             show_bg: true
                             draw_bg: { color: (MUTED) }
+
+                            // ===== Radius Playground Section =====
+                            <View> {
+                                width: Fill, height: Fit,
+                                flow: Down,
+                                spacing: 16,
+
+                                <SectionHeader> { text: "Radius Playground" }
+
+                                <SubsectionLabel> {
+                                    text: "Drag slider to preview corner radius across multiple components"
+                                }
+
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Right,
+                                    spacing: 16,
+                                    align: { y: 0.5 }
+
+                                    radius_demo_slider = <MpSlider> {
+                                        width: 320,
+                                        min: 0.0, max: 16.0, value: 2.0, step: 1.0,
+                                    }
+
+                                    radius_demo_label = <Label> {
+                                        width: 100, height: Fit,
+                                        draw_text: {
+                                            text_style: <THEME_FONT_REGULAR>{ font_size: 14.0 }
+                                            color: (FOREGROUND)
+                                        }
+                                        text: "Radius: 2px"
+                                    }
+                                }
+
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Right,
+                                    spacing: 16,
+                                    align: { y: 0.5 }
+
+                                    radius_demo_button = <MpButtonPrimary> { text: "Primary Button" }
+
+                                    radius_demo_input = <MpInput> {
+                                        width: 220,
+                                        empty_text: "Input preview"
+                                    }
+
+                                    radius_demo_dropdown = <MpDropdown> {
+                                        width: 180,
+                                        labels: ["Radius Demo", "Option 2", "Option 3"]
+                                    }
+                                }
+
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Right,
+                                    spacing: 16,
+                                    align: { y: 0.0 }
+
+                                    radius_demo_card = <MpCard> {
+                                        width: 260,
+                                        <Label> {
+                                            draw_text: {
+                                                text_style: <THEME_FONT_BOLD>{ font_size: 14.0 }
+                                                color: (FOREGROUND)
+                                            }
+                                            text: "Card Preview"
+                                        }
+                                        <Label> {
+                                            draw_text: {
+                                                text_style: <THEME_FONT_REGULAR>{ font_size: 13.0 }
+                                                color: (MUTED_FOREGROUND)
+                                            }
+                                            text: "Card corner radius follows slider value."
+                                        }
+                                    }
+
+                                    radius_demo_popover = <MpPopoverBase> {
+                                        width: 220,
+                                        padding: 10,
+                                        flow: Down,
+                                        spacing: 4,
+
+                                        radius_demo_menu_item = <MpPopoverMenuItem> {
+                                            label = { text: "Popover Item" }
+                                        }
+
+                                        <MpPopoverMenuItemDanger> {
+                                            label = { text: "Danger Item" }
+                                        }
+                                    }
+                                }
+                            }
+
+                            <MpDivider> {}
 
                             // ===== Button Section =====
                             <View> {
@@ -664,7 +758,7 @@ live_design! {
                                             width: Fit, height: Fit,
                                             flow: Down,
                                             spacing: 8,
-
+                                            visible: false,
                                             <SubsectionLabel> { text: "Selected Color" }
 
                                             color_display = <View> {
@@ -2394,6 +2488,136 @@ live_design! {
 
                             <MpDivider> {}
 
+                            // ===== Menu Section =====
+                            <View> {
+                                width: Fill, height: Fit,
+                                flow: Down,
+                                spacing: 16,
+
+                                <SectionHeader> { text: "Menu" }
+
+                                <View> {
+                                    width: Fit, height: Fit,
+                                    flow: Right,
+                                    spacing: 24,
+                                    align: { y: 0.0 }
+
+                                    <View> {
+                                        width: Fit, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Basic Navigation Menu" }
+
+                                        <MpMenu> {
+                                            width: 240
+
+                                            <MpMenuSection> { label = { text: "MAIN" } }
+                                            menu_item_dashboard = <MpMenuItem> {
+                                                text: "Dashboard", selected: true
+                                                draw_bg: { selected: 1.0 }
+                                                draw_text: { selected: 1.0 }
+                                            }
+                                            menu_item_projects = <MpMenuItem> { text: "Projects" }
+                                            menu_item_team = <MpMenuItem> { text: "Team" }
+                                            <MpMenuDivider> {}
+                                            <MpMenuSection> { label = { text: "WORKSPACE" } }
+                                            menu_item_calendar = <MpMenuItem> { text: "Calendar" }
+                                            menu_item_messages = <MpMenuItem> { text: "Messages" }
+                                            menu_item_help = <MpMenuItemDisabled> { text: "Help Center" }
+                                            <MpMenuDivider> {}
+                                            menu_item_sign_out = <MpMenuItemDanger> { text: "Sign Out" }
+                                        }
+                                    }
+
+                                    <View> {
+                                        width: Fit, height: Fit,
+                                        flow: Down,
+                                        spacing: 8
+
+                                        <SubsectionLabel> { text: "Expandable Submenu (Two Levels)" }
+
+                                        <MpMenu> {
+                                            width: 280
+
+                                            <MpMenuSection> { label = { text: "PRODUCT" } }
+                                            menu_tree_overview = <MpMenuItem> {
+                                                text: "Overview", selected: true
+                                                draw_bg: { selected: 1.0 }
+                                                draw_text: { selected: 1.0 }
+                                            }
+
+                                            menu_tree_docs_toggle = <MpMenuItem> { text: "▾ Documentation" }
+                                            menu_tree_docs_children = <View> {
+                                                width: Fill, height: Fit,
+                                                visible: true,
+                                                flow: Down,
+                                                spacing: 2,
+                                                margin: { left: 14 }
+
+                                                menu_tree_docs_getting_started = <MpMenuItem> { text: "Getting Started" }
+                                                menu_tree_docs_components = <MpMenuItem> { text: "Components" }
+                                                menu_tree_docs_api = <MpMenuItem> { text: "API Reference" }
+                                            }
+
+                                            menu_tree_settings_toggle = <MpMenuItem> { text: "▸ Settings" }
+                                            menu_tree_settings_children = <View> {
+                                                width: Fill, height: Fit,
+                                                visible: false,
+                                                flow: Down,
+                                                spacing: 2,
+                                                margin: { left: 14 }
+
+                                                menu_tree_settings_profile = <MpMenuItem> { text: "Profile" }
+                                                menu_tree_settings_security = <MpMenuItem> { text: "Security" }
+                                            }
+                                        }
+                                    }
+
+                                    <View> {
+                                        width: 320, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+                                        padding: { top: 8 }
+
+                                        <SubsectionLabel> { text: "Interaction" }
+                                        <Label> {
+                                            width: Fill,
+                                            draw_text: {
+                                                text_style: <THEME_FONT_REGULAR>{ font_size: 13.0 }
+                                                color: (MUTED_FOREGROUND)
+                                                wrap: Word
+                                            }
+                                            text: "第二组是二级菜单示例：点击 Documentation / Settings 可展开或收缩子菜单，点击叶子节点会更新选中状态。"
+                                        }
+                                    }
+                                }
+
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Down,
+                                    spacing: 4,
+
+                                    menu_status = <Label> {
+                                        draw_text: {
+                                            text_style: <THEME_FONT_REGULAR>{ font_size: 12.0 }
+                                            color: (MUTED_FOREGROUND)
+                                        }
+                                        text: "Selected: Dashboard"
+                                    }
+
+                                    menu_tree_status = <Label> {
+                                        draw_text: {
+                                            text_style: <THEME_FONT_REGULAR>{ font_size: 12.0 }
+                                            color: (MUTED_FOREGROUND)
+                                        }
+                                        text: "Tree Selected: Overview"
+                                    }
+                                }
+                            }
+
+                            <MpDivider> {}
+
                             // ===== PageFlip Section =====
                             <View> {
                                 width: Fill, height: Fit,
@@ -3357,139 +3581,6 @@ live_design! {
 
                             <MpDivider> {}
 
-<<<<<<< HEAD
-||||||| parent of 73abf43 (feat(dock): add dock demo to component zoo)
-                            // ===== Table Section =====
-                            <View> {
-                                width: Fill, height: Fit,
-                                flow: Down,
-                                spacing: 16,
-
-                                <SectionHeader> { text: "Table" }
-
-                                <View> {
-                                    width: Fill, height: Fit,
-                                    flow: Down,
-                                    spacing: 24,
-
-                                    // Basic Table
-                                    <View> {
-                                        width: Fill, height: Fit,
-                                        flow: Down,
-                                        spacing: 8,
-
-                                        <SubsectionLabel> { text: "Basic Table" }
-
-                                        <MpTable> {
-                                            <MpTableHeader> {
-                                                <MpTableHeaderCell> { width: 150.0, label = { text: "Name" } }
-                                                <MpTableHeaderCell> { width: 200.0, label = { text: "Email" } }
-                                                <MpTableHeaderCell> { width: 120.0, label = { text: "Role" } }
-                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Status" } }
-                                            }
-                                            <MpTableRow> {
-                                                <MpTableCell> { width: 150.0, label = { text: "John Doe" } }
-                                                <MpTableCell> { width: 200.0, label = { text: "john@example.com" } }
-                                                <MpTableCell> { width: 120.0, label = { text: "Developer" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "Active" } }
-                                            }
-                                            <MpTableRow> {
-                                                <MpTableCell> { width: 150.0, label = { text: "Jane Smith" } }
-                                                <MpTableCell> { width: 200.0, label = { text: "jane@example.com" } }
-                                                <MpTableCell> { width: 120.0, label = { text: "Designer" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "Active" } }
-                                            }
-                                            <MpTableRow> {
-                                                <MpTableCell> { width: 150.0, label = { text: "Bob Wilson" } }
-                                                <MpTableCell> { width: 200.0, label = { text: "bob@example.com" } }
-                                                <MpTableCell> { width: 120.0, label = { text: "Manager" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "Away" } }
-                                            }
-                                        }
-                                    }
-
-                                    // Striped Table
-                                    <View> {
-                                        width: Fill, height: Fit,
-                                        flow: Down,
-                                        spacing: 8,
-
-                                        <SubsectionLabel> { text: "Striped Table" }
-
-                                        <MpTable> {
-                                            stripe: true
-
-                                            <MpTableHeader> {
-                                                <MpTableHeaderCell> { width: 80.0, label = { text: "ID" } }
-                                                <MpTableHeaderCell> { width: 150.0, label = { text: "Product" } }
-                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Price" } }
-                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Stock" } }
-                                            }
-                                            <MpTableRow> {
-                                                draw_bg: { stripe: 0.0 }
-                                                <MpTableCell> { width: 80.0, label = { text: "001" } }
-                                                <MpTableCell> { width: 150.0, label = { text: "Laptop" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "$999" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "50" } }
-                                            }
-                                            <MpTableRow> {
-                                                draw_bg: { stripe: 1.0 }
-                                                <MpTableCell> { width: 80.0, label = { text: "002" } }
-                                                <MpTableCell> { width: 150.0, label = { text: "Mouse" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "$29" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "200" } }
-                                            }
-                                            <MpTableRow> {
-                                                draw_bg: { stripe: 0.0 }
-                                                <MpTableCell> { width: 80.0, label = { text: "003" } }
-                                                <MpTableCell> { width: 150.0, label = { text: "Keyboard" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "$79" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "150" } }
-                                            }
-                                            <MpTableRow> {
-                                                draw_bg: { stripe: 1.0 }
-                                                <MpTableCell> { width: 80.0, label = { text: "004" } }
-                                                <MpTableCell> { width: 150.0, label = { text: "Monitor" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "$299" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "75" } }
-                                            }
-                                        }
-                                    }
-
-                                    // Borderless Table
-                                    <View> {
-                                        width: Fill, height: Fit,
-                                        flow: Down,
-                                        spacing: 8,
-
-                                        <SubsectionLabel> { text: "Borderless Table" }
-
-                                        <MpTable> {
-                                            bordered: false
-
-                                            <MpTableHeader> {
-                                                <MpTableHeaderCell> { width: 150.0, label = { text: "Task" } }
-                                                <MpTableHeaderCell> { width: 120.0, label = { text: "Assignee" } }
-                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Priority" } }
-                                            }
-                                            <MpTableRow> {
-                                                <MpTableCell> { width: 150.0, label = { text: "Fix login bug" } }
-                                                <MpTableCell> { width: 120.0, label = { text: "Alice" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "High" } }
-                                            }
-                                            <MpTableRow> {
-                                                <MpTableCell> { width: 150.0, label = { text: "Update docs" } }
-                                                <MpTableCell> { width: 120.0, label = { text: "Bob" } }
-                                                <MpTableCell> { width: 100.0, label = { text: "Medium" } }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            <MpDivider> {}
-
-=======
                             // ===== Dock Section =====
                             <View> {
                                 width: Fill, height: Fit,
@@ -3541,7 +3632,7 @@ live_design! {
                                             main_row = {
                                                 left_dock = {
                                                     show_bg: true
-                                                    draw_bg: { color: #1e3a5f }
+                                                    draw_bg: { color: #1d3a5f }
                                                     padding: 8
                                                     flow: Down
                                                     spacing: 4
@@ -3650,7 +3741,7 @@ live_design! {
                                             first = <View> {
                                                 width: Fill, height: Fill
                                                 show_bg: true
-                                                draw_bg: { color: #1e3a5f }
+                                                draw_bg: { color: #1d3a5f }
                                                 padding: 16
                                                 align: { x: 0.5, y: 0.5 }
 
@@ -3926,7 +4017,136 @@ live_design! {
 
                             <MpDivider> {}
 
->>>>>>> 73abf43 (feat(dock): add dock demo to component zoo)
+                            // ===== Table Section =====
+                            <View> {
+                                width: Fill, height: Fit,
+                                flow: Down,
+                                spacing: 16,
+
+                                <SectionHeader> { text: "Table" }
+
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Down,
+                                    spacing: 24,
+
+                                    // Basic Table
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Basic Table" }
+
+                                        <MpTable> {
+                                            <MpTableHeader> {
+                                                <MpTableHeaderCell> { width: 150.0, label = { text: "Name" } }
+                                                <MpTableHeaderCell> { width: 200.0, label = { text: "Email" } }
+                                                <MpTableHeaderCell> { width: 120.0, label = { text: "Role" } }
+                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Status" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "John Doe" } }
+                                                <MpTableCell> { width: 200.0, label = { text: "john@example.com" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Developer" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "Active" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "Jane Smith" } }
+                                                <MpTableCell> { width: 200.0, label = { text: "jane@example.com" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Designer" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "Active" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "Bob Wilson" } }
+                                                <MpTableCell> { width: 200.0, label = { text: "bob@example.com" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Manager" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "Away" } }
+                                            }
+                                        }
+                                    }
+
+                                    // Striped Table
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Striped Table" }
+
+                                        <MpTable> {
+                                            stripe: true
+
+                                            <MpTableHeader> {
+                                                <MpTableHeaderCell> { width: 80.0, label = { text: "ID" } }
+                                                <MpTableHeaderCell> { width: 150.0, label = { text: "Product" } }
+                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Price" } }
+                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Stock" } }
+                                            }
+                                            <MpTableRow> {
+                                                draw_bg: { stripe: 0.0 }
+                                                <MpTableCell> { width: 80.0, label = { text: "001" } }
+                                                <MpTableCell> { width: 150.0, label = { text: "Laptop" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "$999" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "50" } }
+                                            }
+                                            <MpTableRow> {
+                                                draw_bg: { stripe: 1.0 }
+                                                <MpTableCell> { width: 80.0, label = { text: "002" } }
+                                                <MpTableCell> { width: 150.0, label = { text: "Mouse" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "$29" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "200" } }
+                                            }
+                                            <MpTableRow> {
+                                                draw_bg: { stripe: 0.0 }
+                                                <MpTableCell> { width: 80.0, label = { text: "003" } }
+                                                <MpTableCell> { width: 150.0, label = { text: "Keyboard" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "$79" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "150" } }
+                                            }
+                                            <MpTableRow> {
+                                                draw_bg: { stripe: 1.0 }
+                                                <MpTableCell> { width: 80.0, label = { text: "004" } }
+                                                <MpTableCell> { width: 150.0, label = { text: "Monitor" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "$299" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "75" } }
+                                            }
+                                        }
+                                    }
+
+                                    // Borderless Table
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Borderless Table" }
+
+                                        <MpTable> {
+                                            bordered: false
+
+                                            <MpTableHeader> {
+                                                <MpTableHeaderCell> { width: 150.0, label = { text: "Task" } }
+                                                <MpTableHeaderCell> { width: 120.0, label = { text: "Assignee" } }
+                                                <MpTableHeaderCell> { width: 100.0, label = { text: "Priority" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "Fix login bug" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Alice" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "High" } }
+                                            }
+                                            <MpTableRow> {
+                                                <MpTableCell> { width: 150.0, label = { text: "Update docs" } }
+                                                <MpTableCell> { width: 120.0, label = { text: "Bob" } }
+                                                <MpTableCell> { width: 100.0, label = { text: "Medium" } }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            <MpDivider> {}
+
                             // ===== Accordion Section =====
                             <View> {
                                 width: Fill, height: Fit,
@@ -4040,6 +4260,42 @@ live_design! {
                                             }
                                         }
                                     }
+                                }
+                            }
+
+                            <MpDivider> {}
+
+                            // ===== Calendar Section =====
+                            <View> {
+                                width: Fill, height: Fit,
+                                flow: Down,
+                                spacing: 16,
+
+                                <SectionHeader> { text: "Calendar" }
+
+                                <View> {
+                                    width: Fit, height: Fit,
+                                    flow: Right,
+                                    spacing: 24,
+
+                                    // Basic Calendar
+                                    <View> {
+                                        width: Fit, height: Fit,
+                                        flow: Down,
+                                        spacing: 8,
+
+                                        <SubsectionLabel> { text: "Basic" }
+
+                                        calendar1 = <MpCalendar> {}
+                                    }
+                                }
+
+                                calendar_status = <Label> {
+                                    draw_text: {
+                                        text_style: <THEME_FONT_REGULAR>{ font_size: 12.0 }
+                                        color: (MUTED_FOREGROUND)
+                                    }
+                                    text: "Selected: None"
                                 }
                             }
 
@@ -4347,12 +4603,20 @@ pub struct App {
     current_category: usize,
     #[rust]
     is_dark: bool,
+    #[rust]
+    menu_tree_docs_expanded: bool,
+    #[rust]
+    menu_tree_settings_expanded: bool,
+    #[rust]
+    radius_demo_value: f64,
 }
 
 impl LiveHook for App {
     fn after_apply(&mut self, cx: &mut Cx, _apply: &mut Apply, _index: usize, _nodes: &[LiveNode]) {
         self.sync_theme_ui(cx);
         self.sync_category_ui(cx);
+        self.sync_tree_menu_ui(cx);
+        self.sync_radius_demo_ui(cx);
     }
 }
 
@@ -4370,6 +4634,9 @@ impl MatchEvent for App {
         self.counter = 0;
         self.current_category = 0;
         self.is_dark = false;
+        self.menu_tree_docs_expanded = true;
+        self.menu_tree_settings_expanded = false;
+        self.radius_demo_value = 2.0;
 
         self.sync_theme_ui(cx);
 
@@ -4378,6 +4645,9 @@ impl MatchEvent for App {
 
         // Initialize skeleton in loading state
         self.ui.mp_skeleton_widget(ids!(interactive_skeleton)).set_loading(cx, true);
+        self.sync_tree_menu_ui(cx);
+        self.sync_radius_demo_ui(cx);
+
     }
 
     fn handle_actions(&mut self, cx: &mut Cx, actions: &Actions) {
@@ -4427,6 +4697,14 @@ impl MatchEvent for App {
             self.counter += 1;
             self.ui.label(ids!(counter_label))
                 .set_text(cx, &format!("Clicked: {} times", self.counter));
+        }
+
+        // Handle Calendar date selection
+        for action in actions {
+            if let MpCalendarAction::DateSelected(date) = action.as_widget_action().cast() {
+                self.ui.label(ids!(calendar_status))
+                    .set_text(cx, &format!("Selected: {}-{:02}-{:02}", date.year, date.month, date.day));
+            }
         }
 
         // Handle PageFlip navigation
@@ -4497,6 +4775,13 @@ impl MatchEvent for App {
             let new_value = (current - 10.0).max(0.0);
             self.ui.mp_progress(ids!(interactive_progress)).set_value(cx, new_value);
             self.ui.label(ids!(progress_label)).set_text(cx, &format!("{}%", new_value as i32));
+        }
+
+        // Handle radius playground slider
+        if let Some(value) = self.ui.mp_slider(ids!(radius_demo_slider)).changed(&actions) {
+            let radius = value.end().round().clamp(0.0, 16.0);
+            self.radius_demo_value = radius;
+            self.apply_radius_demo(cx, radius);
         }
 
         // Handle slider changes
@@ -4732,6 +5017,56 @@ impl MatchEvent for App {
         if self.ui.mp_tab(ids!(tab_s_map)).clicked(&actions) {
             self.select_tab(cx, "segmented", 2, "Map");
         }
+
+        // Handle Menu item clicks
+        if let Some(label) = self.ui.mp_menu_item(ids!(menu_item_dashboard)).clicked(&actions) {
+            self.select_nav_menu_item(cx, id!(menu_item_dashboard), &label);
+        }
+        if let Some(label) = self.ui.mp_menu_item(ids!(menu_item_projects)).clicked(&actions) {
+            self.select_nav_menu_item(cx, id!(menu_item_projects), &label);
+        }
+        if let Some(label) = self.ui.mp_menu_item(ids!(menu_item_team)).clicked(&actions) {
+            self.select_nav_menu_item(cx, id!(menu_item_team), &label);
+        }
+        if let Some(label) = self.ui.mp_menu_item(ids!(menu_item_calendar)).clicked(&actions) {
+            self.select_nav_menu_item(cx, id!(menu_item_calendar), &label);
+        }
+        if let Some(label) = self.ui.mp_menu_item(ids!(menu_item_messages)).clicked(&actions) {
+            self.select_nav_menu_item(cx, id!(menu_item_messages), &label);
+        }
+        if let Some(label) = self.ui.mp_menu_item(ids!(menu_item_sign_out)).clicked(&actions) {
+            self.select_nav_menu_item(cx, id!(menu_item_sign_out), &label);
+        }
+
+        // Handle Tree Menu toggles
+        if self.ui.mp_menu_item(ids!(menu_tree_docs_toggle)).clicked(&actions).is_some() {
+            self.menu_tree_docs_expanded = !self.menu_tree_docs_expanded;
+            self.sync_tree_menu_ui(cx);
+        }
+        if self.ui.mp_menu_item(ids!(menu_tree_settings_toggle)).clicked(&actions).is_some() {
+            self.menu_tree_settings_expanded = !self.menu_tree_settings_expanded;
+            self.sync_tree_menu_ui(cx);
+        }
+
+        // Handle Tree Menu leaf selection
+        if let Some(label) = self.ui.mp_menu_item(ids!(menu_tree_overview)).clicked(&actions) {
+            self.select_tree_menu_item(cx, id!(menu_tree_overview), &label);
+        }
+        if let Some(label) = self.ui.mp_menu_item(ids!(menu_tree_docs_getting_started)).clicked(&actions) {
+            self.select_tree_menu_item(cx, id!(menu_tree_docs_getting_started), &label);
+        }
+        if let Some(label) = self.ui.mp_menu_item(ids!(menu_tree_docs_components)).clicked(&actions) {
+            self.select_tree_menu_item(cx, id!(menu_tree_docs_components), &label);
+        }
+        if let Some(label) = self.ui.mp_menu_item(ids!(menu_tree_docs_api)).clicked(&actions) {
+            self.select_tree_menu_item(cx, id!(menu_tree_docs_api), &label);
+        }
+        if let Some(label) = self.ui.mp_menu_item(ids!(menu_tree_settings_profile)).clicked(&actions) {
+            self.select_tree_menu_item(cx, id!(menu_tree_settings_profile), &label);
+        }
+        if let Some(label) = self.ui.mp_menu_item(ids!(menu_tree_settings_security)).clicked(&actions) {
+            self.select_tree_menu_item(cx, id!(menu_tree_settings_security), &label);
+        }
     }
 }
 
@@ -4741,6 +5076,38 @@ impl App {
         self.ui
             .label(ids!(theme_label))
             .set_text(cx, if self.is_dark { "Dark" } else { "Light" });
+    }
+
+    fn sync_radius_demo_ui(&mut self, cx: &mut Cx) {
+        self.ui
+            .mp_slider(ids!(radius_demo_slider))
+            .set_single_value(cx, self.radius_demo_value);
+        self.apply_radius_demo(cx, self.radius_demo_value);
+    }
+
+    fn apply_radius_demo(&mut self, cx: &mut Cx, radius: f64) {
+        self.ui
+            .label(ids!(radius_demo_label))
+            .set_text(cx, &format!("Radius: {}px", radius as i32));
+
+        self.ui.widget(ids!(radius_demo_button)).apply_over(cx, live! {
+            draw_bg: { radius: (radius) }
+        });
+        self.ui.widget(ids!(radius_demo_input)).apply_over(cx, live! {
+            draw_bg: { border_radius: (radius) }
+        });
+        self.ui.widget(ids!(radius_demo_dropdown)).apply_over(cx, live! {
+            draw_bg: { border_radius: (radius) }
+        });
+        self.ui.widget(ids!(radius_demo_card)).apply_over(cx, live! {
+            draw_bg: { border_radius: (radius) }
+        });
+        self.ui.widget(ids!(radius_demo_popover)).apply_over(cx, live! {
+            draw_bg: { border_radius: (radius) }
+        });
+        self.ui.widget(ids!(radius_demo_menu_item)).apply_over(cx, live! {
+            draw_bg: { border_radius: (radius) }
+        });
     }
 
     fn sync_category_ui(&mut self, cx: &mut Cx) {
@@ -4860,6 +5227,70 @@ impl App {
         }
 
         self.ui.label(ids!(tab_status)).set_text(cx, &format!("Selected: {}", label));
+        self.ui.redraw(cx);
+    }
+
+    fn select_nav_menu_item(&mut self, cx: &mut Cx, selected: LiveId, label: &str) {
+        self.ui.mp_menu_item(ids!(menu_item_dashboard)).set_selected(cx, selected == id!(menu_item_dashboard));
+        self.ui.mp_menu_item(ids!(menu_item_projects)).set_selected(cx, selected == id!(menu_item_projects));
+        self.ui.mp_menu_item(ids!(menu_item_team)).set_selected(cx, selected == id!(menu_item_team));
+        self.ui.mp_menu_item(ids!(menu_item_calendar)).set_selected(cx, selected == id!(menu_item_calendar));
+        self.ui.mp_menu_item(ids!(menu_item_messages)).set_selected(cx, selected == id!(menu_item_messages));
+        self.ui.mp_menu_item(ids!(menu_item_sign_out)).set_selected(cx, selected == id!(menu_item_sign_out));
+
+        self.ui.label(ids!(menu_status)).set_text(cx, &format!("Selected: {}", label));
+        self.ui.redraw(cx);
+    }
+
+    fn sync_tree_menu_ui(&mut self, cx: &mut Cx) {
+        self.ui
+            .view(ids!(menu_tree_docs_children))
+            .set_visible(cx, self.menu_tree_docs_expanded);
+        self.ui
+            .view(ids!(menu_tree_settings_children))
+            .set_visible(cx, self.menu_tree_settings_expanded);
+
+        self.ui.mp_menu_item(ids!(menu_tree_docs_toggle)).set_text(
+            cx,
+            if self.menu_tree_docs_expanded {
+                "▾ Documentation"
+            } else {
+                "▸ Documentation"
+            },
+        );
+        self.ui.mp_menu_item(ids!(menu_tree_settings_toggle)).set_text(
+            cx,
+            if self.menu_tree_settings_expanded {
+                "▾ Settings"
+            } else {
+                "▸ Settings"
+            },
+        );
+    }
+
+    fn select_tree_menu_item(&mut self, cx: &mut Cx, selected: LiveId, label: &str) {
+        self.ui
+            .mp_menu_item(ids!(menu_tree_overview))
+            .set_selected(cx, selected == id!(menu_tree_overview));
+        self.ui
+            .mp_menu_item(ids!(menu_tree_docs_getting_started))
+            .set_selected(cx, selected == id!(menu_tree_docs_getting_started));
+        self.ui
+            .mp_menu_item(ids!(menu_tree_docs_components))
+            .set_selected(cx, selected == id!(menu_tree_docs_components));
+        self.ui
+            .mp_menu_item(ids!(menu_tree_docs_api))
+            .set_selected(cx, selected == id!(menu_tree_docs_api));
+        self.ui
+            .mp_menu_item(ids!(menu_tree_settings_profile))
+            .set_selected(cx, selected == id!(menu_tree_settings_profile));
+        self.ui
+            .mp_menu_item(ids!(menu_tree_settings_security))
+            .set_selected(cx, selected == id!(menu_tree_settings_security));
+
+        self.ui
+            .label(ids!(menu_tree_status))
+            .set_text(cx, &format!("Tree Selected: {}", label));
         self.ui.redraw(cx);
     }
 }

@@ -1,11 +1,22 @@
 use makepad_widgets::*;
 
+#[derive(Live, LiveHook, LiveRegister)]
+#[live_ignore]
+pub enum MpDrawerPlacement {
+    #[pick]
+    Right,
+    Left,
+    Top,
+    Bottom,
+}
+
 live_design! {
     use link::theme::*;
     use link::shaders::*;
     use link::widgets::*;
 
     use link::theme_colors::*;
+    use crate::theme::radius::*;
 
     // ============================================================
     // MpDrawer - Drawer component
@@ -36,7 +47,7 @@ live_design! {
         show_bg: true
         draw_bg: {
             instance bg_color: (CARD)
-            instance border_radius: 12.0
+            instance border_radius: (RADIUS_NONE)
             instance border_color: (BORDER)
             instance shadow_color: #x00000026
             instance shadow_offset_x: 0.0
@@ -326,15 +337,6 @@ live_design! {
         max_height: 420
         container = <MpDrawerContainerBottom> {}
     }
-}
-
-#[derive(Copy, Clone, Debug, Live, LiveHook)]
-pub enum MpDrawerPlacement {
-    #[pick]
-    Right,
-    Left,
-    Top,
-    Bottom,
 }
 
 #[derive(Live, Widget)]
