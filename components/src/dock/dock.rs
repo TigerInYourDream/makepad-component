@@ -29,9 +29,9 @@ live_design! {
         flow: Down
         show_bg: true
         draw_bg: {
-            instance bg_color: (CARD)
+            color: (CARD)
             fn pixel(self) -> vec4 {
-                return self.bg_color;
+                return self.color;
             }
         }
     }
@@ -112,7 +112,7 @@ live_design! {
             instance selected: 0.0
             instance bg_color: #00000000
             instance bg_color_hover: #0000000D
-            instance bg_color_selected: (SURFACE)
+            instance bg_color_selected: (MUTED)
             instance border_color_selected: (PRIMARY)
 
             fn pixel(self) -> vec4 {
@@ -204,7 +204,7 @@ live_design! {
             spacing: 2
             show_bg: true
             draw_bg: {
-                instance bar_color: (SURFACE)
+                instance bar_color: (MUTED)
                 instance border_color: (BORDER)
                 fn pixel(self) -> vec4 {
                     let sdf = Sdf2d::viewport(self.pos * self.rect_size);
@@ -340,7 +340,7 @@ live_design! {
             instance expanded: 0.0
             instance direction: 0.0
 
-            instance bg_color: (SURFACE)
+            instance bg_color: (MUTED)
             instance bg_color_hover: #e2e8f0
             instance arrow_color: #64748b
             instance arrow_color_hover: #334155
@@ -463,7 +463,6 @@ impl MpDockSplitter {
                 self.view.view(ids!(handle)).apply_over(cx, live! {
                     width: (handle_size),
                     height: Fill,
-                    cursor: ColResize,
                 });
             }
             MpDockSplitAxis::Vertical => {
@@ -474,7 +473,6 @@ impl MpDockSplitter {
                 self.view.view(ids!(handle)).apply_over(cx, live! {
                     width: Fill,
                     height: (handle_size),
-                    cursor: RowResize,
                 });
             }
         }
