@@ -3541,7 +3541,7 @@ live_design! {
                                             main_row = {
                                                 left_dock = {
                                                     show_bg: true
-                                                    draw_bg: { color: #f1f5f9 }
+                                                    draw_bg: { color: #1e3a5f }
                                                     padding: 8
                                                     flow: Down
                                                     spacing: 4
@@ -3550,21 +3550,21 @@ live_design! {
                                                         text: "Left Dock"
                                                         draw_text: {
                                                             text_style: <THEME_FONT_BOLD> { font_size: 12.0 }
-                                                            color: #334155
+                                                            color: #93c5fd
                                                         }
                                                     }
                                                     <Label> {
                                                         text: "File Explorer"
                                                         draw_text: {
                                                             text_style: <THEME_FONT_REGULAR> { font_size: 11.0 }
-                                                            color: #64748b
+                                                            color: #7db8f0
                                                         }
                                                     }
                                                 }
 
                                                 center = {
                                                     show_bg: true
-                                                    draw_bg: { color: #ffffff }
+                                                    draw_bg: { color: #1a1a2a }
                                                     padding: 16
                                                     flow: Down
                                                     align: { x: 0.5, y: 0.5 }
@@ -3573,21 +3573,21 @@ live_design! {
                                                         text: "Center Area"
                                                         draw_text: {
                                                             text_style: <THEME_FONT_BOLD> { font_size: 16.0 }
-                                                            color: #0f172a
+                                                            color: #e2e8f0
                                                         }
                                                     }
                                                     <Label> {
                                                         text: "Main content goes here"
                                                         draw_text: {
                                                             text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
-                                                            color: #64748b
+                                                            color: #94a3b8
                                                         }
                                                     }
                                                 }
 
                                                 right_dock = {
                                                     show_bg: true
-                                                    draw_bg: { color: #f1f5f9 }
+                                                    draw_bg: { color: #14532d }
                                                     padding: 8
                                                     flow: Down
                                                     spacing: 4
@@ -3596,14 +3596,14 @@ live_design! {
                                                         text: "Right Dock"
                                                         draw_text: {
                                                             text_style: <THEME_FONT_BOLD> { font_size: 12.0 }
-                                                            color: #334155
+                                                            color: #80f0a0
                                                         }
                                                     }
                                                     <Label> {
                                                         text: "Properties"
                                                         draw_text: {
                                                             text_style: <THEME_FONT_REGULAR> { font_size: 11.0 }
-                                                            color: #64748b
+                                                            color: #70d890
                                                         }
                                                     }
                                                 }
@@ -3611,7 +3611,7 @@ live_design! {
 
                                             bottom_dock = {
                                                 show_bg: true
-                                                draw_bg: { color: #f8fafc }
+                                                draw_bg: { color: #7c2d12 }
                                                 padding: 8
                                                 flow: Down
                                                 spacing: 4
@@ -3620,14 +3620,14 @@ live_design! {
                                                     text: "Bottom Dock"
                                                     draw_text: {
                                                         text_style: <THEME_FONT_BOLD> { font_size: 12.0 }
-                                                        color: #334155
+                                                        color: #fdba74
                                                     }
                                                 }
                                                 <Label> {
                                                     text: "Terminal / Output"
                                                     draw_text: {
                                                         text_style: <THEME_FONT_REGULAR> { font_size: 11.0 }
-                                                        color: #64748b
+                                                        color: #f0a050
                                                     }
                                                 }
                                             }
@@ -3647,9 +3647,10 @@ live_design! {
                                             axis: Horizontal
                                             split_ratio: 0.4
 
-                                            first = {
+                                            first = <View> {
+                                                width: Fill, height: Fill
                                                 show_bg: true
-                                                draw_bg: { color: #eff6ff }
+                                                draw_bg: { color: #1e3a5f }
                                                 padding: 16
                                                 align: { x: 0.5, y: 0.5 }
 
@@ -3657,14 +3658,15 @@ live_design! {
                                                     text: "Left Panel (40%)"
                                                     draw_text: {
                                                         text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
-                                                        color: #1e40af
+                                                        color: #93c5fd
                                                     }
                                                 }
                                             }
 
-                                            second = {
+                                            second = <View> {
+                                                width: Fill, height: Fill
                                                 show_bg: true
-                                                draw_bg: { color: #f0fdf4 }
+                                                draw_bg: { color: #14532d }
                                                 padding: 16
                                                 align: { x: 0.5, y: 0.5 }
 
@@ -3672,7 +3674,7 @@ live_design! {
                                                     text: "Right Panel (60%)"
                                                     draw_text: {
                                                         text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
-                                                        color: #166534
+                                                        color: #80f0a0
                                                     }
                                                 }
                                             }
@@ -3692,9 +3694,10 @@ live_design! {
                                             axis: Vertical
                                             split_ratio: 0.6
 
-                                            first = {
+                                            first = <View> {
+                                                width: Fill, height: Fill
                                                 show_bg: true
-                                                draw_bg: { color: #fef3c7 }
+                                                draw_bg: { color: #7c2d12 }
                                                 padding: 16
                                                 align: { x: 0.5, y: 0.5 }
 
@@ -3702,14 +3705,15 @@ live_design! {
                                                     text: "Top Panel (60%)"
                                                     draw_text: {
                                                         text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
-                                                        color: #924000
+                                                        color: #fdba74
                                                     }
                                                 }
                                             }
 
-                                            second = {
+                                            second = <View> {
+                                                width: Fill, height: Fill
                                                 show_bg: true
-                                                draw_bg: { color: #fce7f3 }
+                                                draw_bg: { color: #581c87 }
                                                 padding: 16
                                                 align: { x: 0.5, y: 0.5 }
 
@@ -3717,7 +3721,7 @@ live_design! {
                                                     text: "Bottom Panel (40%)"
                                                     draw_text: {
                                                         text_style: <THEME_FONT_REGULAR> { font_size: 12.0 }
-                                                        color: #9d174d
+                                                        color: #d8b4ff
                                                     }
                                                 }
                                             }

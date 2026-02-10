@@ -39,65 +39,63 @@ live_design! {
     pub MpDockSplitter = {{MpDockSplitter}} {
         width: Fill
         height: Fill
+        flow: Right
 
-        first = <View> { width: Fill, height: Fill }
+        draw_splitter: {
+            instance hover: 0.0
+            instance down: 0.0
+            instance is_vertical: 0.0
+            instance handle_color: (BORDER)
+            instance handle_color_hover: (PRIMARY)
 
-        handle = <View> {
-            width: 10, height: Fill
-            show_bg: true
-            draw_bg: {
-                instance hover: 0.0
-                instance down: 0.0
-                instance handle_color: (BORDER)
-                instance handle_color_hover: (PRIMARY)
+            fn pixel(self) -> vec4 {
+                let sdf = Sdf2d::viewport(self.pos * self.rect_size);
+                let c = self.rect_size * 0.5;
 
-                fn pixel(self) -> vec4 {
-                    let sdf = Sdf2d::viewport(self.pos * self.rect_size);
-                    let c = self.rect_size * 0.5;
+                let line_w = 3.0;
+                let rx = mix(c.x - line_w * 0.5, 0.0, self.is_vertical);
+                let ry = mix(0.0, c.y - line_w * 0.5, self.is_vertical);
+                let rw = mix(line_w, self.rect_size.x, self.is_vertical);
+                let rh = mix(self.rect_size.y, line_w, self.is_vertical);
+                sdf.rect(rx, ry, rw, rh);
 
-                    // Visible line in center (wider hit area around it)
-                    let line_w = 3.0;
-                    let is_wide = step(self.rect_size.x, self.rect_size.y);
-                    // Horizontal handle: draw horizontal line; Vertical handle: draw vertical line
-                    let rx = mix(c.x - line_w * 0.5, 0.0, is_wide);
-                    let ry = mix(0.0, c.y - line_w * 0.5, is_wide);
-                    let rw = mix(line_w, self.rect_size.x, is_wide);
-                    let rh = mix(self.rect_size.y, line_w, is_wide);
-                    sdf.rect(rx, ry, rw, rh);
+                let hover_amount = max(self.hover, self.down);
+                let col = mix(self.handle_color, self.handle_color_hover, hover_amount);
+                sdf.fill(col);
 
-                    let hover_amount = max(self.hover, self.down);
-                    let col = mix(self.handle_color, self.handle_color_hover, hover_amount);
-                    sdf.fill(col);
+                return sdf.result;
+            }
+        }
 
-                    return sdf.result;
+        handle_size: 10.0
+        min_size: 50.0
+
+        animator: {
+            hover = {
+                default: off
+                off = {
+                    from: { all: Forward { duration: 0.15 } }
+                    apply: { draw_splitter: { hover: 0.0 } }
+                }
+                on = {
+                    from: { all: Forward { duration: 0.1 } }
+                    apply: { draw_splitter: { hover: 1.0 } }
                 }
             }
-            animator: {
-                hover = {
-                    default: off
-                    off = {
-                        from: { all: Forward { duration: 0.15 } }
-                        apply: { draw_bg: { hover: 0.0 } }
-                    }
-                    on = {
-                        from: { all: Forward { duration: 0.1 } }
-                        apply: { draw_bg: { hover: 1.0 } }
-                    }
+            down = {
+                default: off
+                off = {
+                    from: { all: Forward { duration: 0.1 } }
+                    apply: { draw_splitter: { down: 0.0 } }
                 }
-                down = {
-                    default: off
-                    off = {
-                        from: { all: Forward { duration: 0.1 } }
-                        apply: { draw_bg: { down: 0.0 } }
-                    }
-                    on = {
-                        from: { all: Forward { duration: 0.05 } }
-                        apply: { draw_bg: { down: 1.0 } }
-                    }
+                on = {
+                    from: { all: Forward { duration: 0.05 } }
+                    apply: { draw_splitter: { down: 1.0 } }
                 }
             }
         }
 
+        first = <View> { width: Fill, height: Fill }
         second = <View> { width: Fill, height: Fill }
     }
 
@@ -439,84 +437,36 @@ pub enum MpDockSplitterAction {
     SplitRatioChanged { ratio: f64 },
 }
 
+#[derive(Clone)]
+enum SplitterDrawState {
+    DrawFirst,
+    DrawSplit,
+    DrawSecond,
+}
+
 #[derive(Live, Widget)]
 pub struct MpDockSplitter {
     #[deref] view: View,
     #[live] axis: MpDockSplitAxis,
     #[live(0.5)] split_ratio: f64,
-    #[live(100.0)] min_size: f64,
+    #[live(50.0)] min_size: f64,
+    #[live(10.0)] handle_size: f64,
     #[rust] dragging: bool,
     #[rust] drag_start_ratio: f64,
-    #[rust] container_size: f64,
+    #[rust] rect: Rect,
+    #[rust] position: f64,
+    #[rust] area_first: Area,
+    #[rust] area_second: Area,
     #[animator] animator: Animator,
+    #[redraw] #[live] draw_splitter: DrawQuad,
+    #[rust] draw_state: DrawStateWrap<SplitterDrawState>,
 }
 
-impl LiveHook for MpDockSplitter {
-    fn after_apply(&mut self, cx: &mut Cx, _apply: &mut Apply, _index: usize, _nodes: &[LiveNode]) {
-        self.sync_layout(cx);
-    }
-}
+impl LiveHook for MpDockSplitter {}
 
 impl MpDockSplitter {
-    fn sync_layout(&mut self, cx: &mut Cx) {
-        let handle_size = 10.0;
-        match self.axis {
-            MpDockSplitAxis::Horizontal => {
-                // Side-by-side: flow Right, handle is vertical bar
-                self.view.apply_over(cx, live! {
-                    flow: Right
-                });
-                self.view.view(ids!(handle)).apply_over(cx, live! {
-                    width: (handle_size),
-                    height: Fill,
-                });
-            }
-            MpDockSplitAxis::Vertical => {
-                // Stacked: flow Down, handle is horizontal bar
-                self.view.apply_over(cx, live! {
-                    flow: Down
-                });
-                self.view.view(ids!(handle)).apply_over(cx, live! {
-                    width: Fill,
-                    height: (handle_size),
-                });
-            }
-        }
-    }
-
-    fn apply_split_sizes(&mut self, cx: &mut Cx, container_dim: f64) {
-        let handle_size = 10.0;
-        let available = (container_dim - handle_size).max(0.0);
-        let first_size = (available * self.split_ratio).max(0.0);
-        let second_size = (available - first_size).max(0.0);
-
-        match self.axis {
-            MpDockSplitAxis::Horizontal => {
-                self.view.view(ids!(first)).apply_over(cx, live! {
-                    width: (first_size),
-                    height: Fill,
-                });
-                self.view.view(ids!(second)).apply_over(cx, live! {
-                    width: (second_size),
-                    height: Fill,
-                });
-            }
-            MpDockSplitAxis::Vertical => {
-                self.view.view(ids!(first)).apply_over(cx, live! {
-                    width: Fill,
-                    height: (first_size),
-                });
-                self.view.view(ids!(second)).apply_over(cx, live! {
-                    width: Fill,
-                    height: (second_size),
-                });
-            }
-        }
-    }
-
     fn clamp_ratio(&self, ratio: f64, container_dim: f64) -> f64 {
-        let handle_size = 10.0;
-        let available = (container_dim - handle_size).max(0.0);
+        let available = (container_dim - self.handle_size).max(0.0);
         if available <= 0.0 {
             return 0.5;
         }
@@ -527,6 +477,23 @@ impl MpDockSplitter {
         }
         ratio.clamp(min_ratio, max_ratio)
     }
+
+    fn margin(&self) -> Margin {
+        match self.axis {
+            MpDockSplitAxis::Horizontal => Margin {
+                left: 3.0,
+                top: 0.0,
+                right: 3.0,
+                bottom: 0.0,
+            },
+            MpDockSplitAxis::Vertical => Margin {
+                left: 0.0,
+                top: 3.0,
+                right: 0.0,
+                bottom: 3.0,
+            },
+        }
+    }
 }
 
 impl Widget for MpDockSplitter {
@@ -534,11 +501,10 @@ impl Widget for MpDockSplitter {
         self.view.handle_event(cx, event, scope);
 
         if self.animator_handle_event(cx, event).must_redraw() {
-            self.redraw(cx);
+            self.draw_splitter.redraw(cx);
         }
 
-        let handle_area = self.view.view(ids!(handle)).area();
-        match event.hits(cx, handle_area) {
+        match event.hits_with_options(cx, self.draw_splitter.area(), HitOptions::new().with_margin(self.margin())) {
             Hit::FingerHoverIn(_) => {
                 self.animator_play(cx, ids!(hover.on));
                 match self.axis {
@@ -551,7 +517,7 @@ impl Widget for MpDockSplitter {
                     self.animator_play(cx, ids!(hover.off));
                 }
             }
-            Hit::FingerDown(_fe) => {
+            Hit::FingerDown(_) => {
                 self.dragging = true;
                 self.drag_start_ratio = self.split_ratio;
                 self.animator_play(cx, ids!(down.on));
@@ -562,25 +528,24 @@ impl Widget for MpDockSplitter {
             }
             Hit::FingerMove(fe) => {
                 if self.dragging {
-                    let container_rect = self.view.area().rect(cx);
-                    let (container_origin, container_dim) = match self.axis {
-                        MpDockSplitAxis::Horizontal => (container_rect.pos.x, container_rect.size.x),
-                        MpDockSplitAxis::Vertical => (container_rect.pos.y, container_rect.size.y),
+                    let container_dim = match self.axis {
+                        MpDockSplitAxis::Horizontal => self.rect.size.x,
+                        MpDockSplitAxis::Vertical => self.rect.size.y,
                     };
-                    self.container_size = container_dim;
-
-                    let handle_size = 10.0;
-                    let available = (container_dim - handle_size).max(0.0);
+                    let available = (container_dim - self.handle_size).max(0.0);
                     if available > 0.0 {
+                        let container_origin = match self.axis {
+                            MpDockSplitAxis::Horizontal => self.rect.pos.x,
+                            MpDockSplitAxis::Vertical => self.rect.pos.y,
+                        };
                         let mouse_pos = match self.axis {
                             MpDockSplitAxis::Horizontal => fe.abs.x,
                             MpDockSplitAxis::Vertical => fe.abs.y,
                         };
-                        let new_ratio = (mouse_pos - container_origin - handle_size * 0.5) / available;
+                        let new_ratio = (mouse_pos - container_origin - self.handle_size * 0.5) / available;
                         let clamped = self.clamp_ratio(new_ratio, container_dim);
                         if (clamped - self.split_ratio).abs() > 0.001 {
                             self.split_ratio = clamped;
-                            self.apply_split_sizes(cx, container_dim);
                             self.redraw(cx);
                             cx.widget_action(
                                 self.widget_uid(),
@@ -591,38 +556,91 @@ impl Widget for MpDockSplitter {
                     }
                 }
             }
-            Hit::FingerUp(_) => {
+            Hit::FingerUp(f) => {
                 self.dragging = false;
+                if f.is_over && f.device.has_hovers() {
+                    self.animator_play(cx, ids!(hover.on));
+                } else {
+                    self.animator_play(cx, ids!(hover.off));
+                }
                 self.animator_play(cx, ids!(down.off));
-                self.animator_play(cx, ids!(hover.off));
             }
             _ => {}
         }
     }
 
     fn draw_walk(&mut self, cx: &mut Cx2d, scope: &mut Scope, walk: Walk) -> DrawStep {
-        let container_rect = self.view.area().rect(cx);
-        let container_dim = match self.axis {
-            MpDockSplitAxis::Horizontal => container_rect.size.x,
-            MpDockSplitAxis::Vertical => container_rect.size.y,
-        };
+        if self.draw_state.begin(cx, SplitterDrawState::DrawFirst) {
+            // Begin outer turtle with correct flow direction
+            match self.axis {
+                MpDockSplitAxis::Horizontal => {
+                    cx.begin_turtle(walk, Layout::flow_right());
+                }
+                MpDockSplitAxis::Vertical => {
+                    cx.begin_turtle(walk, Layout::flow_down());
+                }
+            }
 
-        // Use stored container_size if we have a valid one, otherwise use rect
-        let dim = if container_dim > 0.0 {
-            self.container_size = container_dim;
-            container_dim
-        } else if self.container_size > 0.0 {
-            self.container_size
-        } else {
-            // Fallback: estimate from walk
-            0.0
-        };
+            self.rect = cx.turtle().inner_rect();
+            let container_dim = match self.axis {
+                MpDockSplitAxis::Horizontal => self.rect.size.x,
+                MpDockSplitAxis::Vertical => self.rect.size.y,
+            };
+            let available = (container_dim - self.handle_size).max(0.0);
+            self.position = if available > 0.0 {
+                (available * self.split_ratio).clamp(self.min_size, (available - self.min_size).max(self.min_size))
+            } else {
+                0.0
+            };
 
-        if dim > 0.0 {
-            self.apply_split_sizes(cx, dim);
+            // Begin sub-turtle for first child
+            let first_walk = match self.axis {
+                MpDockSplitAxis::Horizontal => Walk::new(Size::Fixed(self.position), Size::fill()),
+                MpDockSplitAxis::Vertical => Walk::new(Size::fill(), Size::Fixed(self.position)),
+            };
+            cx.begin_turtle(first_walk, Layout::flow_down());
         }
 
-        self.view.draw_walk(cx, scope, walk)
+        if let Some(SplitterDrawState::DrawFirst) = self.draw_state.get() {
+            // Draw first child inside the sub-turtle
+            let first = self.view.view(ids!(first));
+            first.draw_all(cx, scope);
+            self.draw_state.set(SplitterDrawState::DrawSplit);
+        }
+
+        if let Some(SplitterDrawState::DrawSplit) = self.draw_state.get() {
+            // End first child's sub-turtle
+            cx.end_turtle_with_area(&mut self.area_first);
+
+            // Draw the splitter handle
+            match self.axis {
+                MpDockSplitAxis::Horizontal => {
+                    self.draw_splitter.apply_over(cx, live! { is_vertical: 0.0 });
+                    self.draw_splitter.draw_walk(cx, Walk::new(Size::Fixed(self.handle_size), Size::fill()));
+                }
+                MpDockSplitAxis::Vertical => {
+                    self.draw_splitter.apply_over(cx, live! { is_vertical: 1.0 });
+                    self.draw_splitter.draw_walk(cx, Walk::new(Size::fill(), Size::Fixed(self.handle_size)));
+                }
+            }
+
+            // Begin sub-turtle for second child
+            cx.begin_turtle(Walk::default(), Layout::flow_down());
+            self.draw_state.set(SplitterDrawState::DrawSecond);
+        }
+
+        if let Some(SplitterDrawState::DrawSecond) = self.draw_state.get() {
+            // Draw second child inside the sub-turtle
+            let second = self.view.view(ids!(second));
+            second.draw_all(cx, scope);
+
+            // End second child's sub-turtle and outer turtle
+            cx.end_turtle_with_area(&mut self.area_second);
+            cx.end_turtle();
+            self.draw_state.end();
+        }
+
+        DrawStep::done()
     }
 }
 
