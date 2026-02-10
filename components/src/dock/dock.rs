@@ -43,7 +43,7 @@ live_design! {
         first = <View> { width: Fill, height: Fill }
 
         handle = <View> {
-            width: 6, height: Fill
+            width: 10, height: Fill
             show_bg: true
             draw_bg: {
                 instance hover: 0.0
@@ -55,9 +55,15 @@ live_design! {
                     let sdf = Sdf2d::viewport(self.pos * self.rect_size);
                     let c = self.rect_size * 0.5;
 
-                    // Thin line in center
-                    let line_w = 2.0;
-                    sdf.rect(c.x - line_w * 0.5, 0.0, line_w, self.rect_size.y);
+                    // Visible line in center (wider hit area around it)
+                    let line_w = 3.0;
+                    let is_wide = step(self.rect_size.x, self.rect_size.y);
+                    // Horizontal handle: draw horizontal line; Vertical handle: draw vertical line
+                    let rx = mix(c.x - line_w * 0.5, 0.0, is_wide);
+                    let ry = mix(0.0, c.y - line_w * 0.5, is_wide);
+                    let rw = mix(line_w, self.rect_size.x, is_wide);
+                    let rh = mix(self.rect_size.y, line_w, is_wide);
+                    sdf.rect(rx, ry, rw, rh);
 
                     let hover_amount = max(self.hover, self.down);
                     let col = mix(self.handle_color, self.handle_color_hover, hover_amount);
@@ -229,7 +235,7 @@ live_design! {
     // ============================================================
 
     pub MpDockResizeHandle = {{MpDockResizeHandle}} {
-        width: 4, height: Fill
+        width: 8, height: Fill
         show_bg: true
         draw_bg: {
             instance hover: 0.0
@@ -290,7 +296,7 @@ live_design! {
             }
 
             left_handle = <MpDockResizeHandle> {
-                width: 4, height: Fill
+                width: 8, height: Fill
                 visible: false
                 cursor: ColResize
             }
@@ -301,7 +307,7 @@ live_design! {
             }
 
             right_handle = <MpDockResizeHandle> {
-                width: 4, height: Fill
+                width: 8, height: Fill
                 visible: false
                 cursor: ColResize
             }
@@ -314,7 +320,7 @@ live_design! {
         }
 
         bottom_handle = <MpDockResizeHandle> {
-            width: Fill, height: 4
+            width: Fill, height: 8
             visible: false
             cursor: RowResize
         }
@@ -453,7 +459,7 @@ impl LiveHook for MpDockSplitter {
 
 impl MpDockSplitter {
     fn sync_layout(&mut self, cx: &mut Cx) {
-        let handle_size = 6.0;
+        let handle_size = 10.0;
         match self.axis {
             MpDockSplitAxis::Horizontal => {
                 // Side-by-side: flow Right, handle is vertical bar
@@ -479,7 +485,7 @@ impl MpDockSplitter {
     }
 
     fn apply_split_sizes(&mut self, cx: &mut Cx, container_dim: f64) {
-        let handle_size = 6.0;
+        let handle_size = 10.0;
         let available = (container_dim - handle_size).max(0.0);
         let first_size = (available * self.split_ratio).max(0.0);
         let second_size = (available - first_size).max(0.0);
@@ -509,7 +515,7 @@ impl MpDockSplitter {
     }
 
     fn clamp_ratio(&self, ratio: f64, container_dim: f64) -> f64 {
-        let handle_size = 6.0;
+        let handle_size = 10.0;
         let available = (container_dim - handle_size).max(0.0);
         if available <= 0.0 {
             return 0.5;
@@ -563,7 +569,7 @@ impl Widget for MpDockSplitter {
                     };
                     self.container_size = container_dim;
 
-                    let handle_size = 6.0;
+                    let handle_size = 10.0;
                     let available = (container_dim - handle_size).max(0.0);
                     if available > 0.0 {
                         let mouse_pos = match self.axis {
