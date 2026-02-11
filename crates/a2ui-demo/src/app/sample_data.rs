@@ -413,3 +413,133 @@ pub(crate) fn get_sample_product_catalog() -> String {
         }
     ]"##.to_string()
 }
+
+/// Get sample A2UI JSON for a music player with 3 songs, volume control, and visualizations
+pub(crate) fn get_sample_music_player() -> String {
+    r##"[
+        {
+            "beginRendering": {
+                "surfaceId": "main",
+                "root": "root-column"
+            }
+        },
+        {
+            "surfaceUpdate": {
+                "surfaceId": "main",
+                "components": [
+                    {
+                        "id": "root-column",
+                        "component": {
+                            "Column": {
+                                "children": { "explicitList": ["main-title", "player-card", "volume-row", "status-text"] }
+                            }
+                        }
+                    },
+                    {
+                        "id": "main-title",
+                        "component": {
+                            "Text": {
+                                "text": { "literalString": "🎵 Makepad Music Player" },
+                                "usageHint": "h1"
+                            }
+                        }
+                    },
+                    {
+                        "id": "player-card",
+                        "component": {
+                            "Card": { "child": "player-list" }
+                        }
+                    },
+                    {
+                        "id": "player-list",
+                        "component": {
+                            "Column": {
+                                "children": { "explicitList": ["song-1", "song-2", "song-3"] }
+                            }
+                        }
+                    },
+                    {
+                        "id": "song-1",
+                        "component": {
+                            "AudioPlayer": {
+                                "url": { "literalString": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+                                "title": { "literalString": "SoundHelix Song 1" },
+                                "artist": { "literalString": "SoundHelix" },
+                                "visualization": "barsAndTaiji"
+                            }
+                        }
+                    },
+                    {
+                        "id": "song-2",
+                        "component": {
+                            "AudioPlayer": {
+                                "url": { "literalString": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+                                "title": { "literalString": "SoundHelix Song 2" },
+                                "artist": { "literalString": "SoundHelix" },
+                                "visualization": "barsAndTaiji"
+                            }
+                        }
+                    },
+                    {
+                        "id": "song-3",
+                        "component": {
+                            "AudioPlayer": {
+                                "url": { "literalString": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+                                "title": { "literalString": "SoundHelix Song 3" },
+                                "artist": { "literalString": "SoundHelix" },
+                                "visualization": "barsAndTaiji"
+                            }
+                        }
+                    },
+                    {
+                        "id": "volume-row",
+                        "component": {
+                            "Row": {
+                                "children": { "explicitList": ["volume-label", "volume-slider"] },
+                                "alignment": "center"
+                            }
+                        }
+                    },
+                    {
+                        "id": "volume-label",
+                        "component": {
+                            "Text": {
+                                "text": { "literalString": "🔊 Volume" },
+                                "usageHint": "body"
+                            }
+                        }
+                    },
+                    {
+                        "id": "volume-slider",
+                        "component": {
+                            "Slider": {
+                                "min": 0,
+                                "max": 100,
+                                "value": { "literalNumber": 50 },
+                                "binding": "/volume"
+                            }
+                        }
+                    },
+                    {
+                        "id": "status-text",
+                        "component": {
+                            "Text": {
+                                "text": { "literalString": "Ready to play" },
+                                "usageHint": "caption"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "dataModelUpdate": {
+                "surfaceId": "main",
+                "path": "/",
+                "contents": [
+                    { "key": "volume", "valueNumber": 50 }
+                ]
+            }
+        }
+    ]"##.to_string()
+}

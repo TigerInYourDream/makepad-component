@@ -1,11 +1,62 @@
 use makepad_component::a2ui::*;
 use makepad_component::widgets::button::MpButtonAction;
 use makepad_widgets::*;
+use makepad_widgets::makepad_platform::live_atomic::AtomicGetSet;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
+use std::sync::{Arc, Mutex};
+use std::sync::atomic::Ordering;
+use std::collections::HashMap;
 
 use super::theme::Theme;
-use super::sample_data::get_sample_product_catalog;
+use super::sample_data::{get_sample_product_catalog, get_sample_music_player};
+use super::audio_player::{AudioPlaybackState, decode_audio_file, start_audio_output};
+
+/// Compute the local cache path for an audio URL.
+/// Files are cached in `crates/a2ui-demo/resources/` by sanitized title + extension.
+fn audio_cache_path(title: &str, url: &str) -> String {
+    let ext = if url.contains(".mp4") || url.contains(".m4a") { "mp4" }
+        else if url.contains(".mp3") { "mp3" }
+        else { "mp3" };
+    let sanitized: String = title.chars().filter(|c| c.is_alphanumeric()).collect();
+    format!("crates/a2ui-demo/resources/audio_{}.{}", sanitized, ext)
+}
+
+/// Decoded PCM cache: cache_path → (samples, sample_rate, channels)
+type PcmCache = Arc<Mutex<HashMap<String, (Vec<f32>, u32, usize)>>>;
+
+/// Pre-download AND pre-decode audio files in background threads.
+fn preload_audio_urls(urls: Vec<(String, String)>, pcm_cache: PcmCache) {
+    for (title, url) in urls {
+        let cache_path = audio_cache_path(&title, &url);
+        // Skip if already decoded in memory
+        if pcm_cache.lock().unwrap().contains_key(&cache_path) {
+            continue;
+        }
+        let pcm_cache = pcm_cache.clone();
+        std::thread::spawn(move || {
+            // Download if not on disk
+            if !std::path::Path::new(&cache_path).exists() {
+                log!("Pre-downloading audio: {} → {}", url, cache_path);
+                let status = std::process::Command::new("curl")
+                    .args(["-L", "-s", "-o", &cache_path, &url])
+                    .status();
+                match status {
+                    Ok(s) if s.success() => log!("Pre-download complete: {}", cache_path),
+                    _ => { log!("Pre-download failed: {}", url); return; }
+                }
+            }
+            // Pre-decode to PCM and store in memory cache
+            match decode_audio_file(&cache_path) {
+                Ok((samples, sample_rate, channels)) => {
+                    log!("Pre-decoded: {} ({} samples, {}Hz)", cache_path, samples.len(), sample_rate);
+                    pcm_cache.lock().unwrap().insert(cache_path, (samples, sample_rate, channels));
+                }
+                Err(e) => log!("Pre-decode failed: {} - {}", cache_path, e),
+            }
+        });
+    }
+}
 
 live_design! {
     use link::theme::*;
@@ -127,6 +178,28 @@ live_design! {
                             }
                         }
 
+                        // Music Player demo button
+                        music_btn = <MpButton> {
+                            text: "🎵 Music"
+                            draw_text: { color: #FFFFFF }
+                            draw_bg: {
+                                color: #CC3366
+                                color_hover: #BB2255
+                                color_pressed: #AA1144
+                            }
+                        }
+
+                        // Cyber Sound Art demo button
+                        cyber_art_btn = <MpButton> {
+                            text: "🎨 Cyber Art"
+                            draw_text: { color: #FFFFFF }
+                            draw_bg: {
+                                color: #9933CC
+                                color_hover: #8822BB
+                                color_pressed: #7711AA
+                            }
+                        }
+
                         // Connect to server button
                         connect_btn = <MpButton> {
                             text: "🎨 Live Editor"
@@ -215,6 +288,22 @@ pub struct App {
     /// Currently playing audio URL (None = not playing)
     #[rust]
     playing_audio_component_id: Option<String>,
+
+    /// Shared audio playback state (native audio via cx.audio_output)
+    #[rust]
+    audio_state: Arc<AudioPlaybackState>,
+
+    /// Signal from audio thread to UI for amplitude visualization updates
+    #[rust]
+    audio_signal: SignalToUI,
+
+    /// Whether the audio output callback has been registered
+    #[rust]
+    audio_output_registered: bool,
+
+    /// Pre-decoded PCM cache for instant playback
+    #[rust]
+    pcm_cache: PcmCache,
 }
 
 impl LiveRegister for App {
@@ -387,6 +476,22 @@ impl App {
             }
         }
 
+        // Handle "Music Player" button click (MpButton)
+        let music_btn_ref = self.ui.widget(ids!(music_btn));
+        if let Some(item) = actions.find_widget_action(music_btn_ref.widget_uid()) {
+            if matches!(item.cast::<MpButtonAction>(), MpButtonAction::Clicked) {
+                self.load_music_player(cx);
+            }
+        }
+
+        // Handle "Cyber Art" button click (MpButton)
+        let cyber_art_btn_ref = self.ui.widget(ids!(cyber_art_btn));
+        if let Some(item) = actions.find_widget_action(cyber_art_btn_ref.widget_uid()) {
+            if matches!(item.cast::<MpButtonAction>(), MpButtonAction::Clicked) {
+                self.load_json_file(cx, "cyber_art.json", "🎨 Cyber Sound Art");
+            }
+        }
+
         // Handle "Load Static Data" button click (MpButton)
         let load_btn_ref = self.ui.widget(ids!(load_btn));
         if let Some(item) = actions.find_widget_action(load_btn_ref.widget_uid()) {
@@ -441,6 +546,22 @@ impl App {
                                 self.ui.label(ids!(status_label)).set_text(
                                     cx,
                                     &format!("🛒 Added {} to cart!", product_id),
+                                );
+                            }
+                        } else if user_action.action.name == "switchEffect" {
+                            // Update DataModel /shaderEffect to switch the active shader
+                            if let Some(effect) = user_action.action.context.get("effect") {
+                                let effect_str = effect.as_str().unwrap_or("aurora");
+                                if let Some(mut surface) = surface_ref.borrow_mut::<A2uiSurface>() {
+                                    if let Some(processor) = surface.processor_mut() {
+                                        if let Some(data_model) = processor.get_data_model_mut(&user_action.surface_id) {
+                                            data_model.set("/shaderEffect", serde_json::Value::String(effect_str.to_string()));
+                                        }
+                                    }
+                                }
+                                self.ui.label(ids!(status_label)).set_text(
+                                    cx,
+                                    &format!("🎨 Effect: {}", effect_str),
                                 );
                             }
                         } else if user_action.action.name == "calendarCellClick" {
@@ -498,18 +619,14 @@ impl App {
                 A2uiSurfaceAction::PlayAudio { component_id, url, title } => {
                     // Toggle: if same component is playing, stop it
                     if self.playing_audio_component_id.as_ref() == Some(&component_id) {
-                        // Stop playing
-                        #[cfg(target_os = "macos")]
-                        {
-                            let _ = std::process::Command::new("pkill")
-                                .args(["-9", "afplay"])
-                                .status();
-                        }
+                        // Stop native audio playback
+                        self.audio_state.stop();
                         self.playing_audio_component_id = None;
 
                         // Update surface state for button display
                         let surface = self.ui.a2ui_surface(ids!(a2ui_surface));
                         surface.set_playing_component(None);
+                        surface.set_audio_amplitude(0.0);
 
                         self.ui.label(ids!(status_label)).set_text(
                             cx,
@@ -518,12 +635,7 @@ impl App {
                         log!("Stopped: {}", title);
                     } else {
                         // Stop any current playback first
-                        #[cfg(target_os = "macos")]
-                        {
-                            let _ = std::process::Command::new("pkill")
-                                .args(["-9", "afplay"])
-                                .status();
-                        }
+                        self.audio_state.stop();
 
                         log!("PlayAudio: {} - {}", title, url);
                         self.playing_audio_component_id = Some(component_id.clone());
@@ -532,66 +644,86 @@ impl App {
                         let surface = self.ui.a2ui_surface(ids!(a2ui_surface));
                         surface.set_playing_component(Some(component_id.clone()));
 
-                        self.ui.label(ids!(status_label)).set_text(
-                            cx,
-                            &format!("🎵 Playing: {}", title),
-                        );
+                        // Ensure audio output callback is registered
+                        if !self.audio_output_registered {
+                            start_audio_output(cx, self.audio_state.clone(), self.audio_signal.clone());
+                            self.audio_output_registered = true;
+                        }
 
-                        // Download to resources directory and play
-                        let title_clone = title.clone();
-                        let url_clone = url.clone();
-                        std::thread::spawn(move || {
-                            // Determine file extension from URL
-                            let ext = if url_clone.contains(".mp4") { "mp4" }
-                                else if url_clone.contains(".mp3") { "mp3" }
-                                else { "mp3" };
+                        // Check if PCM is already decoded in memory → instant playback
+                        let cache_path = audio_cache_path(&title, &url);
+                        let pcm_hit = self.pcm_cache.lock().unwrap().get(&cache_path).cloned();
 
-                            let filename = format!("audio_{}.{}",
-                                title_clone.chars().filter(|c| c.is_alphanumeric()).collect::<String>(),
-                                ext
+                        if let Some((samples, sample_rate, channels)) = pcm_hit {
+                            // Instant playback from memory cache
+                            log!("Instant playback from PCM cache: {}", cache_path);
+                            self.ui.label(ids!(status_label)).set_text(
+                                cx,
+                                &format!("▶ {}", title),
                             );
-                            let download_path = format!("crates/a2ui-demo/resources/{}", filename);
-
-                            log!("Downloading {} to {}", url_clone, download_path);
-
-                            // Download using curl
-                            let status = std::process::Command::new("curl")
-                                .args(["-L", "-o", &download_path, &url_clone])
-                                .status();
-
-                            match status {
-                                Ok(s) if s.success() => {
-                                    log!("Download complete: {}", download_path);
-
-                                    // Play with system player
-                                    #[cfg(target_os = "macos")]
-                                    {
-                                        let _ = std::process::Command::new("afplay")
-                                            .arg(&download_path)
-                                            .spawn();
-                                    }
-                                    #[cfg(target_os = "linux")]
-                                    {
-                                        let _ = std::process::Command::new("aplay")
-                                            .arg(&download_path)
-                                            .spawn();
-                                    }
-                                    #[cfg(target_os = "windows")]
-                                    {
-                                        let _ = std::process::Command::new("cmd")
-                                            .args(["/C", "start", "", &download_path])
-                                            .spawn();
-                                    }
-                                }
-                                _ => {
-                                    log!("Download failed");
-                                }
+                            if !self.audio_output_registered {
+                                start_audio_output(cx, self.audio_state.clone(), self.audio_signal.clone());
+                                self.audio_output_registered = true;
                             }
-                        });
+                            self.audio_state.load_samples(samples, sample_rate, channels);
+                            self.audio_state.play();
+                            self.audio_signal.set();
+                        } else {
+                            // Fallback: download + decode in background
+                            let audio_state = self.audio_state.clone();
+                            let audio_signal = self.audio_signal.clone();
+                            let url_clone = url.clone();
+                            let pcm_cache = self.pcm_cache.clone();
+                            let cache_path_clone = cache_path.clone();
+
+                            let cached_on_disk = std::path::Path::new(&cache_path).exists();
+                            let status_msg = if cached_on_disk {
+                                format!("⏳ Decoding: {}", title)
+                            } else {
+                                format!("⏳ Downloading: {}", title)
+                            };
+                            self.ui.label(ids!(status_label)).set_text(cx, &status_msg);
+
+                            if !self.audio_output_registered {
+                                start_audio_output(cx, self.audio_state.clone(), self.audio_signal.clone());
+                                self.audio_output_registered = true;
+                            }
+
+                            std::thread::spawn(move || {
+                                let path = if cached_on_disk {
+                                    log!("Using cached audio: {}", cache_path_clone);
+                                    cache_path_clone.clone()
+                                } else {
+                                    log!("Downloading {} to {}", url_clone, cache_path_clone);
+                                    let status = std::process::Command::new("curl")
+                                        .args(["-L", "-s", "-o", &cache_path_clone, &url_clone])
+                                        .status();
+                                    match status {
+                                        Ok(s) if s.success() => cache_path_clone.clone(),
+                                        _ => { log!("Download failed for {}", url_clone); return; }
+                                    }
+                                };
+
+                                match decode_audio_file(&path) {
+                                    Ok((samples, sample_rate, channels)) => {
+                                        log!("Decoded: {} samples, {}Hz, {} ch", samples.len(), sample_rate, channels);
+                                        // Store in PCM cache for next time
+                                        pcm_cache.lock().unwrap().insert(
+                                            cache_path_clone, (samples.clone(), sample_rate, channels)
+                                        );
+                                        audio_state.load_samples(samples, sample_rate, channels);
+                                        audio_state.play();
+                                        audio_signal.set();
+                                    }
+                                    Err(e) => log!("Decode failed: {}", e),
+                                }
+                            });
+                        }
                     }
                     self.ui.redraw(cx);
                 }
                 A2uiSurfaceAction::DataModelChanged { surface_id, path, value } => {
+                    log!("[DataModelChanged] surface={}, path={}, value={}", surface_id, path, value);
                     // Update the data model with the new value
                     if let Some(mut surface) = surface_ref.borrow_mut::<A2uiSurface>() {
                         if let Some(processor) = surface.processor_mut() {
@@ -616,6 +748,15 @@ impl App {
                                 }
 
                                 data_model.set(&path, value.clone());
+
+                                // Volume control: update audio playback volume
+                                if path.contains("volume") || path.contains("Volume") {
+                                    if let Some(vol) = value.as_f64() {
+                                        let normalized = (vol / 100.0).clamp(0.0, 1.0);
+                                        self.audio_state.volume.set(normalized);
+                                        log!("[volume] path={}, raw={}, normalized={:.2}", path, vol, normalized);
+                                    }
+                                }
 
                                 // Computed value: when maxPrice changes, update maxPriceDisplay
                                 if path == "/filters/maxPrice" {
@@ -799,6 +940,14 @@ impl App {
                         }
                     }
                 }
+                // Pre-download any audio URLs found in the component tree
+                if let Some(surface) = surface_ref.borrow::<A2uiSurface>() {
+                    let urls = surface.collect_audio_urls();
+                    if !urls.is_empty() {
+                        preload_audio_urls(urls, self.pcm_cache.clone());
+                    }
+                }
+
                 if self.live_mode {
                     self.ui.label(ids!(status_label)).set_text(cx, "🎨 Live UI Updated");
                     self.loaded = true;
@@ -1053,6 +1202,122 @@ impl App {
         self.ui.redraw(cx);
     }
 
+    fn load_json_file(&mut self, cx: &mut Cx, path: &str, title: &str) {
+        self.host = None;
+        self.live_host = None;
+        self.is_streaming = false;
+        self.live_mode = false;
+
+        let surface_ref = self.ui.widget(ids!(a2ui_surface));
+        if let Some(mut surface) = surface_ref.borrow_mut::<A2uiSurface>() {
+            surface.clear();
+        }
+
+        self.ui.label(ids!(title_label)).set_text(cx, title);
+
+        let json_str = match std::fs::read_to_string(path) {
+            Ok(s) => s,
+            Err(e) => {
+                self.ui.label(ids!(status_label))
+                    .set_text(cx, &format!("Error: {} not found ({})", path, e));
+                self.ui.redraw(cx);
+                return;
+            }
+        };
+
+        let surface_ref = self.ui.widget(ids!(a2ui_surface));
+        let result = {
+            if let Some(mut surface) = surface_ref.borrow_mut::<A2uiSurface>() {
+                match surface.process_json(&json_str) {
+                    Ok(events) => {
+                        log!("Loaded {}: {} events processed", path, events.len());
+                        Some(events.len())
+                    }
+                    Err(e) => {
+                        log!("Error parsing {}: {}", path, e);
+                        None
+                    }
+                }
+            } else {
+                None
+            }
+        };
+
+        if let Some(count) = result {
+            // Pre-download and pre-decode any audio URLs immediately
+            if let Some(surface) = surface_ref.borrow::<A2uiSurface>() {
+                let urls = surface.collect_audio_urls();
+                if !urls.is_empty() {
+                    log!("Pre-loading {} audio URLs on JSON load", urls.len());
+                    preload_audio_urls(urls, self.pcm_cache.clone());
+                }
+            }
+            self.ui.label(ids!(status_label))
+                .set_text(cx, &format!("Ready to play | {} events loaded", count));
+            self.loaded = true;
+        } else {
+            self.ui.label(ids!(status_label))
+                .set_text(cx, &format!("Error loading {}", path));
+        }
+
+        self.ui.redraw(cx);
+    }
+
+    fn load_music_player(&mut self, cx: &mut Cx) {
+        // Disconnect from server if connected
+        if self.host.is_some() {
+            self.disconnect(cx);
+        }
+        self.live_mode = false;
+
+        // Clear the surface before loading
+        let surface_ref = self.ui.widget(ids!(a2ui_surface));
+        if let Some(mut surface) = surface_ref.borrow_mut::<A2uiSurface>() {
+            surface.clear();
+        }
+
+        self.ui.label(ids!(title_label)).set_text(cx, "🎵 Makepad Music Player");
+
+        let a2ui_json = get_sample_music_player();
+
+        let surface_ref = self.ui.widget(ids!(a2ui_surface));
+        let result = {
+            if let Some(mut surface) = surface_ref.borrow_mut::<A2uiSurface>() {
+                match surface.process_json(&a2ui_json) {
+                    Ok(events) => {
+                        log!("Music Player: {} events processed", events.len());
+                        Some(events.len())
+                    }
+                    Err(e) => {
+                        log!("Error parsing music player JSON: {}", e);
+                        None
+                    }
+                }
+            } else {
+                None
+            }
+        };
+
+        if let Some(count) = result {
+            // Pre-download and pre-decode audio URLs for instant playback
+            if let Some(surface) = surface_ref.borrow::<A2uiSurface>() {
+                let urls = surface.collect_audio_urls();
+                if !urls.is_empty() {
+                    log!("Pre-loading {} audio URLs for music player", urls.len());
+                    preload_audio_urls(urls, self.pcm_cache.clone());
+                }
+            }
+            self.ui.label(ids!(status_label))
+                .set_text(cx, &format!("🎵 Music Player | {} events | 3 songs ready", count));
+            self.loaded = true;
+        } else {
+            self.ui.label(ids!(status_label))
+                .set_text(cx, "Error loading music player data");
+        }
+
+        self.ui.redraw(cx);
+    }
+
     fn load_math_charts(&mut self, cx: &mut Cx) {
         // Disconnect from server if connected
         if self.host.is_some() {
@@ -1115,13 +1380,52 @@ impl AppMain for App {
         // Auto-load math charts on startup if math_test.json exists
         if let Event::Startup = event {
             self.apply_theme(cx);
-            if std::path::Path::new("math_test.json").exists() {
+            if std::path::Path::new("music_test.json").exists() {
+                self.load_json_file(cx, "music_test.json", "🎵 Makepad Music Player");
+            } else if std::path::Path::new("math_test.json").exists() {
                 self.load_math_charts(cx);
             } else {
                 self.connect_to_server(cx);
             }
             // Start interval timer for polling instead of continuous frame requests
             self.poll_timer = cx.start_interval(1.0);
+        }
+
+        // Handle audio signal: update amplitude visualization from audio thread
+        if let Event::Signal = event {
+            if self.audio_signal.check_and_clear() {
+                let amp = self.audio_state.amplitude.get() as f32;
+                let is_playing = self.audio_state.is_playing.load(Ordering::Relaxed);
+
+                let surface = self.ui.a2ui_surface(ids!(a2ui_surface));
+                surface.set_audio_amplitude(amp);
+
+                // If playback finished, update UI state
+                if !is_playing && self.playing_audio_component_id.is_some() {
+                    surface.set_playing_component(None);
+                    surface.set_audio_amplitude(0.0);
+                    self.playing_audio_component_id = None;
+                    self.ui.label(ids!(status_label)).set_text(cx, "⏹ Playback finished");
+                } else if is_playing {
+                    // Update status with playback position
+                    let pos = self.audio_state.position_secs.get();
+                    let dur = self.audio_state.duration_secs.get();
+                    self.ui.label(ids!(status_label)).set_text(
+                        cx,
+                        &format!("🎵 Playing {:.0}s / {:.0}s", pos, dur),
+                    );
+                }
+
+                self.ui.redraw(cx);
+            }
+        }
+
+        // Handle audio device enumeration: use default output
+        if let Event::AudioDevices(devices) = event {
+            let default_output = devices.default_output();
+            if !default_output.is_empty() {
+                cx.use_audio_outputs(&default_output);
+            }
         }
 
         // Only poll on timer ticks — no polling on mouse/keyboard/paint events

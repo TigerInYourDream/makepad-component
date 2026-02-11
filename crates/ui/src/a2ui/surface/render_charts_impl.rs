@@ -391,19 +391,48 @@ impl A2uiSurface {
 
         cx.end_turtle();
 
-        // Audio bars visualization (placed right after title/artist)
-        let bars_walk = Walk {
-            width: Size::Fixed(50.0),
-            height: Size::Fixed(35.0),
-            margin: Margin { left: 16.0, ..Margin::default() },
-            ..Walk::default()
-        };
-        self.draw_audio_bars.is_playing = if is_playing { 1.0 } else { 0.0 };
-        self.draw_audio_bars.draw_walk(cx, bars_walk);
+        // Visualization: respect the AudioPlayer's visualization setting
+        use crate::a2ui::message::AudioVisualization;
+        let vis = audio_player.visualization.unwrap_or(AudioVisualization::BarsAndTaiji);
+        let show_bars = matches!(vis, AudioVisualization::Bars | AudioVisualization::BarsAndTaiji);
+        let show_taiji = matches!(vis, AudioVisualization::Taiji | AudioVisualization::BarsAndTaiji);
 
-        // Request next frame for continuous animation when playing
-        if is_playing {
-            cx.new_next_frame();
+        if show_bars {
+            let bars_walk = Walk {
+                width: Size::Fixed(180.0),
+                height: Size::Fixed(56.0),
+                margin: Margin { left: 16.0, ..Margin::default() },
+                ..Walk::default()
+            };
+            self.draw_audio_bars.is_playing = if is_playing { 1.0 } else { 0.0 };
+            self.draw_audio_bars.amplitude = self.audio_amplitude;
+            self.draw_audio_bars.draw_walk(cx, bars_walk);
+        }
+
+        if show_taiji {
+            let taiji_size = 56.0;
+            let taiji_walk = Walk {
+                width: Size::Fixed(taiji_size),
+                height: Size::Fixed(taiji_size),
+                margin: Margin { left: 8.0, ..Margin::default() },
+                ..Walk::default()
+            };
+            // taiji_anim is a monotonically increasing time counter
+            let time_step = if is_playing { 0.02 } else { 0.005 };
+            self.taiji_anim += time_step;
+            let amp = self.audio_amplitude;
+            // DJ scratch: base slow spin + oscillating swing modulated by amplitude
+            let base_spin = self.taiji_anim * 0.15;
+            let swing_size = if is_playing { 0.08 + amp * 0.25 } else { 0.01 };
+            let scratch = (self.taiji_anim * 3.5).sin() * swing_size;
+            let rotation = (base_spin + scratch).rem_euclid(1.0);
+            self.draw_taiji.anim = rotation;
+            self.draw_taiji.draw_walk(cx, taiji_walk);
+        }
+
+        // Always request next frame for idle animation (gentle breathing)
+        if show_bars || show_taiji {
+            self.next_frame = cx.new_next_frame();
         }
 
         cx.end_turtle();
@@ -472,9 +501,6 @@ impl A2uiSurface {
             title.clone(),
         ));
 
-        // Debug: check area rect
-        let rect = button_area.rect(cx);
-        log!("[render_audio_player] idx={}, id={}, rect=({:.0},{:.0} {:.0}x{:.0})",
-             audio_player_idx, component_id, rect.pos.x, rect.pos.y, rect.size.x, rect.size.y);
+        let _rect = button_area.rect(cx);
     }
 }

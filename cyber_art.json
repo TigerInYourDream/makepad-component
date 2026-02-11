@@ -1,0 +1,427 @@
+[
+  {
+    "beginRendering": {
+      "surfaceId": "main",
+      "root": "root-column"
+    }
+  },
+  {
+    "surfaceUpdate": {
+      "surfaceId": "main",
+      "components": [
+        {
+          "id": "root-column",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": [
+                  "title",
+                  "stage-card",
+                  "effect-row",
+                  "divider1",
+                  "playlist-title",
+                  "playlist-card",
+                  "volume-row",
+                  "params-title",
+                  "speed-row",
+                  "zoom-row",
+                  "glow-row",
+                  "color-row"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "title",
+          "component": {
+            "Text": {
+              "text": { "literalString": "Cyber Sound Art" },
+              "usageHint": "h1"
+            }
+          }
+        },
+        {
+          "id": "stage-card",
+          "component": {
+            "Card": {
+              "child": "shader-stage"
+            }
+          }
+        },
+        {
+          "id": "shader-stage",
+          "component": {
+            "ShaderStage": {
+              "effect": { "path": "/shaderEffect" },
+              "width": 800.0,
+              "height": 450.0,
+              "speed": { "path": "/effectSpeed" },
+              "zoom": { "path": "/effectZoom" },
+              "glow": { "path": "/effectGlow" },
+              "colorShift": { "path": "/effectColorShift" }
+            }
+          }
+        },
+        {
+          "id": "effect-row",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": [
+                  "btn-aurora",
+                  "btn-reef",
+                  "btn-fractal",
+                  "btn-lattice",
+                  "btn-jellyfish",
+                  "btn-fire"
+                ]
+              },
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "btn-aurora-text",
+          "component": {
+            "Text": { "text": { "literalString": "Aurora" } }
+          }
+        },
+        {
+          "id": "btn-aurora",
+          "component": {
+            "Button": {
+              "child": "btn-aurora-text",
+              "action": {
+                "name": "switchEffect",
+                "context": [
+                  { "key": "effect", "value": { "literalString": "aurora" } }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "btn-reef-text",
+          "component": {
+            "Text": { "text": { "literalString": "Reef" } }
+          }
+        },
+        {
+          "id": "btn-reef",
+          "component": {
+            "Button": {
+              "child": "btn-reef-text",
+              "action": {
+                "name": "switchEffect",
+                "context": [
+                  { "key": "effect", "value": { "literalString": "reef" } }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "btn-fractal-text",
+          "component": {
+            "Text": { "text": { "literalString": "Fractal" } }
+          }
+        },
+        {
+          "id": "btn-fractal",
+          "component": {
+            "Button": {
+              "child": "btn-fractal-text",
+              "action": {
+                "name": "switchEffect",
+                "context": [
+                  { "key": "effect", "value": { "literalString": "fractalRainbow" } }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "btn-lattice-text",
+          "component": {
+            "Text": { "text": { "literalString": "Lattice" } }
+          }
+        },
+        {
+          "id": "btn-lattice",
+          "component": {
+            "Button": {
+              "child": "btn-lattice-text",
+              "action": {
+                "name": "switchEffect",
+                "context": [
+                  { "key": "effect", "value": { "literalString": "glowingLattice" } }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "btn-jellyfish-text",
+          "component": {
+            "Text": { "text": { "literalString": "Jellyfish" } }
+          }
+        },
+        {
+          "id": "btn-jellyfish",
+          "component": {
+            "Button": {
+              "child": "btn-jellyfish-text",
+              "action": {
+                "name": "switchEffect",
+                "context": [
+                  { "key": "effect", "value": { "literalString": "jellyfish" } }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "btn-fire-text",
+          "component": {
+            "Text": { "text": { "literalString": "Fire" } }
+          }
+        },
+        {
+          "id": "btn-fire",
+          "component": {
+            "Button": {
+              "child": "btn-fire-text",
+              "action": {
+                "name": "switchEffect",
+                "context": [
+                  { "key": "effect", "value": { "literalString": "turbulenceFire" } }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "divider1",
+          "component": {
+            "Divider": {}
+          }
+        },
+        {
+          "id": "playlist-title",
+          "component": {
+            "Text": {
+              "text": { "literalString": "Playlist" },
+              "usageHint": "h2"
+            }
+          }
+        },
+        {
+          "id": "playlist-card",
+          "component": {
+            "Card": {
+              "child": "playlist-col"
+            }
+          }
+        },
+        {
+          "id": "playlist-col",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["player1", "player2", "player3"]
+              }
+            }
+          }
+        },
+        {
+          "id": "player1",
+          "component": {
+            "AudioPlayer": {
+              "url": { "literalString": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+              "title": { "literalString": "SoundHelix Song 1" },
+              "visualization": "barsAndTaiji"
+            }
+          }
+        },
+        {
+          "id": "player2",
+          "component": {
+            "AudioPlayer": {
+              "url": { "literalString": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+              "title": { "literalString": "SoundHelix Song 2" },
+              "visualization": "barsAndTaiji"
+            }
+          }
+        },
+        {
+          "id": "player3",
+          "component": {
+            "AudioPlayer": {
+              "url": { "literalString": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+              "title": { "literalString": "SoundHelix Song 3" },
+              "visualization": "barsAndTaiji"
+            }
+          }
+        },
+        {
+          "id": "volume-row",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["volume-label", "volume-slider", "volume-value"]
+              },
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "volume-label",
+          "component": {
+            "Text": {
+              "text": { "literalString": "Volume" },
+              "usageHint": "body"
+            }
+          }
+        },
+        {
+          "id": "volume-slider",
+          "component": {
+            "Slider": {
+              "value": { "path": "/volume" },
+              "min": 0,
+              "max": 100,
+              "step": 1,
+              "binding": "/volume"
+            }
+          }
+        },
+        {
+          "id": "volume-value",
+          "component": {
+            "Text": {
+              "text": { "path": "/volume" },
+              "usageHint": "body"
+            }
+          }
+        },
+
+        {
+          "id": "params-title",
+          "component": {
+            "Text": {
+              "text": { "literalString": "Effect Parameters" },
+              "usageHint": "h3"
+            }
+          }
+        },
+        {
+          "id": "speed-row",
+          "component": {
+            "Row": {
+              "children": { "explicitList": ["speed-label", "speed-slider"] },
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "speed-label",
+          "component": { "Text": { "text": { "literalString": "Speed" }, "usageHint": "body" } }
+        },
+        {
+          "id": "speed-slider",
+          "component": {
+            "Slider": {
+              "value": { "path": "/effectSpeed" },
+              "min": 0.1, "max": 3.0, "step": 0.1,
+              "binding": "/effectSpeed"
+            }
+          }
+        },
+        {
+          "id": "zoom-row",
+          "component": {
+            "Row": {
+              "children": { "explicitList": ["zoom-label", "zoom-slider"] },
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "zoom-label",
+          "component": { "Text": { "text": { "literalString": "Zoom" }, "usageHint": "body" } }
+        },
+        {
+          "id": "zoom-slider",
+          "component": {
+            "Slider": {
+              "value": { "path": "/effectZoom" },
+              "min": 0.3, "max": 3.0, "step": 0.1,
+              "binding": "/effectZoom"
+            }
+          }
+        },
+        {
+          "id": "glow-row",
+          "component": {
+            "Row": {
+              "children": { "explicitList": ["glow-label", "glow-slider"] },
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "glow-label",
+          "component": { "Text": { "text": { "literalString": "Glow" }, "usageHint": "body" } }
+        },
+        {
+          "id": "glow-slider",
+          "component": {
+            "Slider": {
+              "value": { "path": "/effectGlow" },
+              "min": 0.0, "max": 3.0, "step": 0.1,
+              "binding": "/effectGlow"
+            }
+          }
+        },
+        {
+          "id": "color-row",
+          "component": {
+            "Row": {
+              "children": { "explicitList": ["color-label", "color-slider"] },
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "color-label",
+          "component": { "Text": { "text": { "literalString": "Color Shift" }, "usageHint": "body" } }
+        },
+        {
+          "id": "color-slider",
+          "component": {
+            "Slider": {
+              "value": { "path": "/effectColorShift" },
+              "min": 0.0, "max": 6.28, "step": 0.1,
+              "binding": "/effectColorShift"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "dataModelUpdate": {
+      "surfaceId": "main",
+      "path": "/",
+      "contents": [
+        { "key": "shaderEffect", "valueString": "aurora" },
+        { "key": "volume", "valueNumber": 50 },
+        { "key": "effectSpeed", "valueNumber": 1.0 },
+        { "key": "effectZoom", "valueNumber": 1.0 },
+        { "key": "effectGlow", "valueNumber": 1.0 },
+        { "key": "effectColorShift", "valueNumber": 0.0 }
+      ]
+    }
+  }
+]

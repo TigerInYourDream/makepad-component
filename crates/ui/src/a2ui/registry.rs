@@ -35,6 +35,8 @@ pub enum A2uiComponentType {
     Calendar,
     // Media
     AudioPlayer,
+    // Shader visualization
+    ShaderStage,
 }
 
 impl A2uiComponentType {
@@ -59,6 +61,7 @@ impl A2uiComponentType {
             A2uiComponentType::Chart => "Chart",
             A2uiComponentType::Calendar => "Calendar",
             A2uiComponentType::AudioPlayer => "AudioPlayer",
+            A2uiComponentType::ShaderStage => "ShaderStage",
         }
     }
 
@@ -83,6 +86,7 @@ impl A2uiComponentType {
             "Chart" => Some(A2uiComponentType::Chart),
             "Calendar" => Some(A2uiComponentType::Calendar),
             "AudioPlayer" => Some(A2uiComponentType::AudioPlayer),
+            "ShaderStage" => Some(A2uiComponentType::ShaderStage),
             _ => None,
         }
     }
@@ -108,6 +112,7 @@ impl A2uiComponentType {
             A2uiComponentType::Chart,
             A2uiComponentType::Calendar,
             A2uiComponentType::AudioPlayer,
+            A2uiComponentType::ShaderStage,
         ]
     }
 }
@@ -298,6 +303,14 @@ impl ComponentRegistry {
             implemented: true,
         });
 
+        // Shader visualization components
+        registry.register(ComponentMapping {
+            a2ui_type: A2uiComponentType::ShaderStage,
+            makepad_widget: "DrawQuad (shader stage)",
+            description: "Full-screen shader art stage with audio-reactive effects",
+            implemented: true,
+        });
+
         registry
     }
 
@@ -372,6 +385,7 @@ pub fn component_type_of(component: &super::message::ComponentType) -> A2uiCompo
         ComponentType::Chart(_) => A2uiComponentType::Chart,
         ComponentType::Calendar(_) => A2uiComponentType::Calendar,
         ComponentType::AudioPlayer(_) => A2uiComponentType::AudioPlayer,
+        ComponentType::ShaderStage(_) => A2uiComponentType::ShaderStage,
     }
 }
 

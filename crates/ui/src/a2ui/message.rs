@@ -167,6 +167,9 @@ pub enum ComponentType {
     Calendar(CalendarComponent),
     // Media components
     AudioPlayer(AudioPlayerComponent),
+
+    // Shader visualization components
+    ShaderStage(ShaderStageComponent),
 }
 
 /// Children reference - either explicit list or template-based
@@ -379,6 +382,10 @@ pub struct SliderComponent {
     /// Step size
     #[serde(default)]
     pub step: Option<f64>,
+
+    /// Two-way data binding path (e.g., "/volume")
+    #[serde(default)]
+    pub binding: Option<String>,
 }
 
 /// Multiple choice selection
@@ -639,6 +646,76 @@ pub struct AudioPlayerComponent {
     /// Whether to autoplay (default false)
     #[serde(default)]
     pub autoplay: Option<bool>,
+
+    /// Visualization style for the audio player.
+    /// Options: "bars" (waveform only), "taiji" (yin-yang only),
+    /// "barsAndTaiji" (both, default), "minimal" (no visualization)
+    #[serde(default)]
+    pub visualization: Option<AudioVisualization>,
+}
+
+/// Audio player visualization style
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AudioVisualization {
+    /// Waveform bars only
+    Bars,
+    /// Liquid Glass Taiji only
+    Taiji,
+    /// Both waveform bars and Taiji (default)
+    BarsAndTaiji,
+    /// No visualization
+    Minimal,
+}
+
+// ============================================================================
+// Shader Visualization Components
+// ============================================================================
+
+/// Shader stage component for full-screen shader art effects.
+/// The effect name is data-bound so it can be switched via DataModel updates.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShaderStageComponent {
+    /// Active shader effect name (data-bound via StringValue).
+    /// Options: "aurora", "reef", "fractalRainbow", "glowingLattice", "jellyfish", "turbulenceFire"
+    pub effect: StringValue,
+
+    /// Stage width in logical pixels (default 800.0)
+    #[serde(default = "default_shader_stage_width")]
+    pub width: f64,
+
+    /// Stage height in logical pixels (default 450.0)
+    #[serde(default = "default_shader_stage_height")]
+    pub height: f64,
+
+    /// Speed multiplier (data-bound). Default 1.0. Range ~0.1-3.0.
+    /// Controls animation speed of the active effect.
+    #[serde(default)]
+    pub speed: Option<NumberValue>,
+
+    /// Zoom/scale factor (data-bound). Default 1.0. Range ~0.3-3.0.
+    /// Controls spatial scale of the effect pattern.
+    #[serde(default)]
+    pub zoom: Option<NumberValue>,
+
+    /// Glow intensity multiplier (data-bound). Default 1.0. Range ~0.0-3.0.
+    /// Controls brightness/glow of the effect.
+    #[serde(default)]
+    pub glow: Option<NumberValue>,
+
+    /// Color hue shift (data-bound). Default 0.0. Range 0.0-6.28 (radians).
+    /// Rotates the color palette of the effect.
+    #[serde(default, rename = "colorShift")]
+    pub color_shift: Option<NumberValue>,
+}
+
+fn default_shader_stage_width() -> f64 {
+    800.0
+}
+
+fn default_shader_stage_height() -> f64 {
+    450.0
 }
 
 // ============================================================================

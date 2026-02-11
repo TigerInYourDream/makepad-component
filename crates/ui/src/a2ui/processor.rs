@@ -185,6 +185,28 @@ impl A2uiMessageProcessor {
         self.data_models.get_mut(surface_id)
     }
 
+    /// Collect all AudioPlayer URLs from all surfaces.
+    /// Returns `(title, url)` pairs resolved against data models.
+    pub fn collect_audio_urls(&self) -> Vec<(String, String)> {
+        use crate::a2ui::message::ComponentType;
+        let empty_dm = DataModel::new();
+        let mut result = Vec::new();
+        for (surface_id, surface) in &self.surfaces {
+            let dm = self.data_models.get(surface_id).unwrap_or(&empty_dm);
+            for (_id, comp) in surface.components.iter() {
+                if let ComponentType::AudioPlayer(player) = &comp.component {
+                    let url = resolve_string_value(&player.url, dm);
+                    if url.is_empty() { continue; }
+                    let title = player.title.as_ref()
+                        .map(|t| resolve_string_value(t, dm))
+                        .unwrap_or_else(|| "Audio".to_string());
+                    result.push((title, url));
+                }
+            }
+        }
+        result
+    }
+
     /// Process a single A2UI message
     ///
     /// Returns a list of events that occurred as a result of processing.

@@ -55,6 +55,9 @@ impl A2uiSurface {
             ComponentType::AudioPlayer(audio_player) => {
                 self.render_audio_player(cx, audio_player, data_model, component_id);
             }
+            ComponentType::ShaderStage(stage) => {
+                self.render_shader_stage(cx, stage, data_model, component_id);
+            }
             ComponentType::Divider(_) => {
                 self.render_divider(cx);
             }
@@ -599,27 +602,36 @@ impl A2uiSurface {
     ) {
         let slider_idx = self.slider_meta.len();
 
-        // Get values
-        let current_value =
-            resolve_number_value_scoped(&slider.value, data_model, self.current_scope.as_deref());
+        // Get binding path: prefer explicit `binding` field, fall back to value path
+        let binding_path = slider.binding.clone().or_else(|| {
+            slider.value.as_path().map(|p| {
+                if let Some(scope) = &self.current_scope {
+                    format!("{}/{}", scope, p.trim_start_matches('/'))
+                } else {
+                    p.to_string()
+                }
+            })
+        });
+
+        // Get current value: read from data model via binding path, fall back to literal value
+        let current_value = if let Some(ref path) = binding_path {
+            data_model.get_number(path).unwrap_or_else(|| {
+                resolve_number_value_scoped(&slider.value, data_model, self.current_scope.as_deref())
+            })
+        } else {
+            resolve_number_value_scoped(&slider.value, data_model, self.current_scope.as_deref())
+        };
         let min = slider.min.unwrap_or(0.0);
         let max = slider.max.unwrap_or(100.0);
-
-        // Get binding path
-        let binding_path = slider.value.as_path().map(|p| {
-            if let Some(scope) = &self.current_scope {
-                format!("{}/{}", scope, p.trim_start_matches('/'))
-            } else {
-                p.to_string()
-            }
-        });
 
         // Get or grow slider from pool
         let sl = self.pool_slider(cx, slider_idx);
 
-        // Set range and value
+        // Set range and value (but NOT during active drag - let user control position)
         sl.set_range(min, max);
-        sl.set_single_value(cx, current_value);
+        if !sl.is_dragging() {
+            sl.set_single_value(cx, current_value);
+        }
 
         // Draw the slider widget
         let _ = sl.draw_walk(cx, &mut Scope::empty(), Walk::new(Size::Fixed(200.0), Size::Fixed(24.0)));

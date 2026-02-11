@@ -7,6 +7,7 @@
 mod theme;
 mod logic;
 mod sample_data;
+pub mod audio_player;
 
 pub use theme::*;
 pub use logic::*;

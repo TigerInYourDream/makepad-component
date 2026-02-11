@@ -17,3 +17,13 @@ publish = false
 makepad-component = { path = "crates/ui" }
 makepad-plot = { path = "crates/makepad-plot" }
 makepad-widgets = { git = "https://github.com/makepad/makepad", branch = "dev" }
+
+# Optimize audio decoder even in debug builds (symphonia does heavy float math)
+[profile.dev.package.symphonia-core]
+opt-level = 2
+[profile.dev.package.symphonia-bundle-mp3]
+opt-level = 2
+[profile.dev.package.symphonia-codec-aac]
+opt-level = 2
+[profile.dev.package.symphonia-format-isomp4]
+opt-level = 2

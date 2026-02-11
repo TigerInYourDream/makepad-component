@@ -96,7 +96,7 @@
             "Slider": {
               "min": 0,
               "max": 100,
-              "value": 50,
+              "value": { "literalNumber": 50 },
               "binding": "/volume"
             }
           }

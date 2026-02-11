@@ -1,5 +1,13 @@
 impl Widget for A2uiSurface {
     fn handle_event(&mut self, cx: &mut Cx, event: &Event, scope: &mut Scope) {
+        // Handle NextFrame for continuous animation (audio bars breathing)
+        if self.next_frame.is_event(event).is_some() {
+            // Request another frame to keep animation loop running
+            self.next_frame = cx.new_next_frame();
+            self.redraw(cx);
+            return;
+        }
+
         // Forward events to 3D chart widgets FIRST for interactive rotation/zoom
         self.plot_surface3d.handle_event(cx, event, scope);
         self.plot_scatter3d.handle_event(cx, event, scope);
@@ -218,7 +226,6 @@ impl Widget for A2uiSurface {
             }
 
             if let (Some(surface), Some(data_model)) = (surface_opt, data_model_opt) {
-                log!("[draw_walk] Found surface with root: {}, {} components", surface.root, surface.components.len());
                 Some((surface.clone(), data_model.clone()))
             } else {
                 None

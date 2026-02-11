@@ -30,52 +30,48 @@ live_design! {
                 let track_col = mix(self.track_color, self.disabled_track_color, self.disabled);
                 let fill_col = mix(self.fill_color, self.disabled_fill_color, self.disabled);
 
-                // For vertical, swap coordinates conceptually
                 let is_vert = self.vertical;
-                let length = mix(sz.x, sz.y, is_vert);
-                let thickness = mix(sz.y, sz.x, is_vert);
-                let r = thickness * 0.5;
 
-                // Draw track capsule
-                let pos_main = mix(self.pos.x, 1.0 - self.pos.y, is_vert);
-                let pos_cross = mix(self.pos.y, self.pos.x, is_vert);
+                // Visual track thickness (thin strip centered in the full rect)
+                let visual_thickness = 6.0;
 
-                // Create capsule shape based on orientation
                 if is_vert > 0.5 {
-                    sdf.circle(r, r, r);
-                    sdf.rect(0.0, r, sz.x, sz.y - sz.x);
-                    sdf.circle(r, sz.y - r, r);
+                    // Vertical: thin track centered horizontally
+                    let track_x = (sz.x - visual_thickness) * 0.5;
+                    let r = visual_thickness * 0.5;
+                    sdf.box(track_x, 0.0, visual_thickness, sz.y, r);
+                    sdf.fill(track_col);
+
+                    // Fill region
+                    let fill_start = sz.y * (1.0 - self.progress_end);
+                    let fill_end = sz.y * (1.0 - self.progress_start);
+                    let py = self.pos.y * sz.y;
+                    let in_fill = step(fill_start, py) * step(py, fill_end);
+
+                    let sdf2 = Sdf2d::viewport(self.pos * self.rect_size);
+                    sdf2.box(track_x, 0.0, visual_thickness, sz.y, r);
+                    sdf2.fill(fill_col);
+                    let result = mix(sdf.result, sdf2.result, in_fill * sdf2.result.w);
+                    return result;
                 } else {
-                    sdf.circle(r, r, r);
-                    sdf.rect(r, 0.0, sz.x - sz.y, sz.y);
-                    sdf.circle(sz.x - r, r, r);
+                    // Horizontal: thin track centered vertically
+                    let track_y = (sz.y - visual_thickness) * 0.5;
+                    let r = visual_thickness * 0.5;
+                    sdf.box(0.0, track_y, sz.x, visual_thickness, r);
+                    sdf.fill(track_col);
+
+                    // Fill region
+                    let fill_start = sz.x * self.progress_start;
+                    let fill_end = sz.x * self.progress_end;
+                    let px = self.pos.x * sz.x;
+                    let in_fill = step(fill_start, px) * step(px, fill_end);
+
+                    let sdf2 = Sdf2d::viewport(self.pos * self.rect_size);
+                    sdf2.box(0.0, track_y, sz.x, visual_thickness, r);
+                    sdf2.fill(fill_col);
+                    let result = mix(sdf.result, sdf2.result, in_fill * sdf2.result.w);
+                    return result;
                 }
-
-                sdf.fill(track_col);
-
-                // Draw fill based on progress
-                let fill_start = length * self.progress_start;
-                let fill_end = length * self.progress_end;
-                let px = pos_main * length;
-
-                // Check if pixel is in fill region
-                let in_fill = step(fill_start, px) * step(px, fill_end);
-
-                // Create second SDF for fill
-                let sdf2 = Sdf2d::viewport(self.pos * self.rect_size);
-                if is_vert > 0.5 {
-                    sdf2.circle(r, r, r);
-                    sdf2.rect(0.0, r, sz.x, sz.y - sz.x);
-                    sdf2.circle(r, sz.y - r, r);
-                } else {
-                    sdf2.circle(r, r, r);
-                    sdf2.rect(r, 0.0, sz.x - sz.y, sz.y);
-                    sdf2.circle(sz.x - r, r, r);
-                }
-                sdf2.fill(fill_col);
-
-                let result = mix(sdf.result, sdf2.result, in_fill * sdf2.result.w);
-                return result;
             }
         }
 
@@ -423,15 +419,13 @@ impl Widget for MpSlider {
 
         // Get the rect for drawing
         let rect = cx.walk_turtle(walk);
-        let track_thickness = 6.0;
         let thumb_size = 20.0;
 
         if self.vertical {
-            // Vertical layout
-            let track_x = (rect.size.x - track_thickness) / 2.0;
+            // Vertical layout - draw track at full rect size for hit testing
             let track_rect = Rect {
-                pos: DVec2 { x: rect.pos.x + track_x, y: rect.pos.y },
-                size: DVec2 { x: track_thickness, y: rect.size.y },
+                pos: rect.pos,
+                size: DVec2 { x: rect.size.x, y: rect.size.y },
             };
             self.draw_track.draw_abs(cx, track_rect);
             self.track_area = self.draw_track.area();
@@ -462,10 +456,10 @@ impl Widget for MpSlider {
             }
         } else {
             // Horizontal layout
-            let track_y = (rect.size.y - track_thickness) / 2.0;
+            // Draw track at full rect height for hit testing; shader renders visual track centered
             let track_rect = Rect {
-                pos: DVec2 { x: rect.pos.x, y: rect.pos.y + track_y },
-                size: DVec2 { x: rect.size.x, y: track_thickness },
+                pos: rect.pos,
+                size: DVec2 { x: rect.size.x, y: rect.size.y },
             };
             self.draw_track.draw_abs(cx, track_rect);
             self.track_area = self.draw_track.area();
@@ -632,6 +626,11 @@ impl MpSlider {
     pub fn set_single_value(&mut self, cx: &mut Cx, value: f64) {
         self.value = value.clamp(self.min, self.max);
         self.redraw(cx);
+    }
+
+    /// Returns true if the user is currently dragging the slider
+    pub fn is_dragging(&self) -> bool {
+        self.dragging
     }
 
     pub fn set_range(&mut self, min: f64, max: f64) {

@@ -63,6 +63,13 @@ live_design! {
     use crate::a2ui::surface::draw_types::DrawA2uiArc;
     use crate::a2ui::surface::draw_types::DrawA2uiQuad;
     use crate::a2ui::surface::draw_types::DrawAudioBars;
+    use crate::a2ui::surface::draw_types::DrawTaiji;
+    use crate::a2ui::surface::draw_types::DrawAurora;
+    use crate::a2ui::surface::draw_types::DrawReef;
+    use crate::a2ui::surface::draw_types::DrawFractalRainbow;
+    use crate::a2ui::surface::draw_types::DrawGlowingLattice;
+    use crate::a2ui::surface::draw_types::DrawJellyfish;
+    use crate::a2ui::surface::draw_types::DrawTurbulenceFire;
 
     use crate::widgets::calendar::MpCalendar;
 
@@ -184,7 +191,15 @@ live_design! {
         plot_surface3d: <Surface3D> {}
         plot_scatter3d: <Scatter3D> {}
         plot_line3d: <Line3D> {}
+        draw_aurora: <DrawAurora> {}
+        draw_reef: <DrawReef> {}
+        draw_fractal_rainbow: <DrawFractalRainbow> {}
+        draw_glowing_lattice: <DrawGlowingLattice> {}
+        draw_jellyfish: <DrawJellyfish> {}
+        draw_turbulence_fire: <DrawTurbulenceFire> {}
+
         draw_audio_bars: <DrawAudioBars> {}
+        draw_taiji: <DrawTaiji> {}
 
         // Audio player button (draw_button/draw_button_text still used by audio player)
         draw_button: {
@@ -408,10 +423,49 @@ pub struct A2uiSurface {
     #[live] plot_scatter3d: Scatter3D,
     #[live] plot_line3d: Line3D,
 
+    /// Draw Aurora shader stage effect
+    #[redraw]
+    #[live]
+    draw_aurora: DrawAurora,
+
+    /// Draw Reef shader stage effect
+    #[redraw]
+    #[live]
+    draw_reef: DrawReef,
+
+    /// Draw Fractal Rainbow shader stage effect
+    #[redraw]
+    #[live]
+    draw_fractal_rainbow: DrawFractalRainbow,
+
+    /// Draw Glowing Lattice shader stage effect
+    #[redraw]
+    #[live]
+    draw_glowing_lattice: DrawGlowingLattice,
+
+    /// Draw Jellyfish shader stage effect
+    #[redraw]
+    #[live]
+    draw_jellyfish: DrawJellyfish,
+
+    /// Draw Turbulence Fire shader stage effect (Xor technique)
+    #[redraw]
+    #[live]
+    draw_turbulence_fire: DrawTurbulenceFire,
+
     /// Draw audio bars visualization
     #[redraw]
     #[live]
     draw_audio_bars: DrawAudioBars,
+
+    /// Draw Taiji (Yin-Yang) with liquid glass effect
+    #[redraw]
+    #[live]
+    draw_taiji: DrawTaiji,
+
+    /// Taiji rotation animation state (0.0–1.0, wraps)
+    #[rust]
+    taiji_anim: f32,
 
     // ============================================================================
     // Widget pool templates (used to clone new pool instances)
@@ -528,6 +582,14 @@ pub struct A2uiSurface {
 
     #[rust]
     mp_calendar: Option<MpCalendar>,
+
+    /// Real audio amplitude from native playback (0.0–1.0)
+    #[rust]
+    audio_amplitude: f32,
+
+    /// NextFrame token for continuous animation (audio bars)
+    #[rust]
+    next_frame: NextFrame,
 
     /// AudioPlayer button areas for event detection (play buttons)
     #[rust]
@@ -716,6 +778,21 @@ impl A2uiSurface {
         self.playing_component_id.as_ref()
     }
 
+    /// Set the real audio amplitude for visualization (0.0–1.0, from native audio playback)
+    pub fn set_audio_amplitude(&mut self, amplitude: f32) {
+        self.audio_amplitude = amplitude;
+    }
+
+    /// Collect all AudioPlayer URLs from the component tree.
+    /// Returns (title, url) pairs for pre-downloading.
+    pub fn collect_audio_urls(&self) -> Vec<(String, String)> {
+        if let Some(processor) = &self.processor {
+            processor.collect_audio_urls()
+        } else {
+            vec![]
+        }
+    }
+
     /// Process A2UI JSON messages
     pub fn process_json(&mut self, json: &str) -> Result<Vec<ProcessorEvent>, serde_json::Error> {
         self.init_processor();
@@ -808,6 +885,9 @@ include!("render_charts_impl.rs");
 // Render methods - calendar grid
 include!("render_calendar_impl.rs");
 
+// Render methods - shader stage effects
+include!("render_shader_stage_impl.rs");
+
 impl A2uiSurfaceRef {
     /// Process A2UI JSON messages
     pub fn process_json(&self, json: &str) -> Result<Vec<ProcessorEvent>, serde_json::Error> {
@@ -876,6 +956,22 @@ impl A2uiSurfaceRef {
     pub fn set_playing_component(&self, component_id: Option<String>) {
         if let Some(mut inner) = self.borrow_mut() {
             inner.set_playing_component(component_id);
+        }
+    }
+
+    /// Set the real audio amplitude for visualization (0.0–1.0)
+    pub fn set_audio_amplitude(&self, amplitude: f32) {
+        if let Some(mut inner) = self.borrow_mut() {
+            inner.set_audio_amplitude(amplitude);
+        }
+    }
+
+    /// Collect all AudioPlayer URLs from the component tree for pre-downloading.
+    pub fn collect_audio_urls(&self) -> Vec<(String, String)> {
+        if let Some(inner) = self.borrow() {
+            inner.collect_audio_urls()
+        } else {
+            vec![]
         }
     }
 }
