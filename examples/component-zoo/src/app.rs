@@ -23,6 +23,7 @@ use makepad_components::dock::MpDockToggleWidgetRefExt;
 use makepad_components::dock::MpDockToggleRefExt;
 use makepad_components::dock::MpDockAreaWidgetRefExt;
 use makepad_components::dock::MpDockPlacement;
+use makepad_components::select::MpSelectWidgetWidgetRefExt;
 
 live_design! {
     use link::theme::*;
@@ -64,6 +65,7 @@ live_design! {
     use makepad_components::tooltip::*;
     use makepad_components::table::*;
     use makepad_components::dock::*;
+    use makepad_components::select::*;
 
     // ============================================================
     // Section Header Component
@@ -564,6 +566,152 @@ live_design! {
                                             width: 160,
                                             labels: ["Large", "Option 2"]
                                         }
+                                    }
+                                }
+                            }
+
+                            <MpDivider> {}
+
+                            // ===== Select Section =====
+                            <View> {
+                                width: Fill, height: Fit,
+                                flow: Down,
+                                spacing: 16,
+
+                                <SectionHeader> { text: "Select" }
+
+                                // Basic
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Down,
+                                    spacing: 12,
+
+                                    <SubsectionLabel> { text: "Basic" }
+
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Right,
+                                        spacing: 16,
+                                        align: { y: 0.5 }
+
+                                        select_basic = <MpSelect> {
+                                            width: 200,
+                                            placeholder: "Pick a fruit..."
+                                        }
+
+                                        select_status = <Label> {
+                                            draw_text: {
+                                                text_style: <THEME_FONT_REGULAR>{ font_size: 14.0 }
+                                                color: (MUTED_FOREGROUND)
+                                            }
+                                            text: "No selection"
+                                        }
+                                    }
+                                }
+
+                                // Searchable
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Down,
+                                    spacing: 12,
+
+                                    <SubsectionLabel> { text: "Searchable" }
+
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Right,
+                                        spacing: 16,
+                                        align: { y: 0.5 }
+
+                                        select_searchable = <MpSelect> {
+                                            width: 200,
+                                            placeholder: "Search fruits..."
+                                            searchable: true
+                                        }
+
+                                        select_search_status = <Label> {
+                                            draw_text: {
+                                                text_style: <THEME_FONT_REGULAR>{ font_size: 14.0 }
+                                                color: (MUTED_FOREGROUND)
+                                            }
+                                            text: "No selection"
+                                        }
+                                    }
+                                }
+
+                                // Clearable
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Down,
+                                    spacing: 12,
+
+                                    <SubsectionLabel> { text: "Clearable" }
+
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Right,
+                                        spacing: 16,
+                                        align: { y: 0.5 }
+
+                                        select_clearable = <MpSelect> {
+                                            width: 200,
+                                            placeholder: "Clearable select..."
+                                            clearable: true
+                                        }
+
+                                        select_clear_status = <Label> {
+                                            draw_text: {
+                                                text_style: <THEME_FONT_REGULAR>{ font_size: 14.0 }
+                                                color: (MUTED_FOREGROUND)
+                                            }
+                                            text: "No selection"
+                                        }
+                                    }
+                                }
+
+                                // Sizes
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Down,
+                                    spacing: 12,
+
+                                    <SubsectionLabel> { text: "Sizes" }
+
+                                    <View> {
+                                        width: Fill, height: Fit,
+                                        flow: Right,
+                                        spacing: 16,
+                                        align: { y: 0.5 }
+
+                                        select_small = <MpSelectSmall> {
+                                            width: 160,
+                                            placeholder: "Small"
+                                        }
+
+                                        select_medium = <MpSelect> {
+                                            width: 180,
+                                            placeholder: "Medium"
+                                        }
+
+                                        select_large = <MpSelectLarge> {
+                                            width: 200,
+                                            placeholder: "Large"
+                                        }
+                                    }
+                                }
+
+                                // Disabled
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Down,
+                                    spacing: 12,
+
+                                    <SubsectionLabel> { text: "Disabled" }
+
+                                    select_disabled = <MpSelect> {
+                                        width: 200,
+                                        placeholder: "Disabled select"
+                                        disabled: true
                                     }
                                 }
                             }
@@ -4648,6 +4796,22 @@ impl MatchEvent for App {
         self.sync_tree_menu_ui(cx);
         self.sync_radius_demo_ui(cx);
 
+        // Initialize Select component items
+        let fruit_labels: Vec<String> = vec![
+            "Apple".into(), "Banana".into(), "Cherry".into(),
+            "Date".into(), "Elderberry".into(), "Fig".into(),
+            "Grape".into(), "Honeydew".into(), "Kiwi".into(),
+            "Lemon".into(),
+        ];
+        self.ui.mp_select_widget(ids!(select_basic)).set_labels(cx, fruit_labels.clone());
+        self.ui.mp_select_widget(ids!(select_searchable)).set_labels(cx, fruit_labels.clone());
+        self.ui.mp_select_widget(ids!(select_clearable)).set_labels(cx, fruit_labels.clone());
+        self.ui.mp_select_widget(ids!(select_small)).set_labels(cx, fruit_labels.clone());
+        self.ui.mp_select_widget(ids!(select_medium)).set_labels(cx, fruit_labels.clone());
+        self.ui.mp_select_widget(ids!(select_large)).set_labels(cx, fruit_labels.clone());
+        self.ui.mp_select_widget(ids!(select_disabled)).set_labels(cx, fruit_labels);
+        self.ui.mp_select_widget(ids!(select_disabled)).set_selected_index(cx, 0);
+
     }
 
     fn handle_actions(&mut self, cx: &mut Cx, actions: &Actions) {
@@ -4961,6 +5125,20 @@ impl MatchEvent for App {
         if let Some(idx) = self.ui.drop_down(ids!(dropdown_basic)).selected(&actions) {
             let label = labels.get(idx).unwrap_or(&"Unknown");
             self.ui.label(ids!(dropdown_status)).set_text(cx, &format!("Selected: {}", label));
+        }
+
+        // Handle Select changes
+        if let Some((_, val)) = self.ui.mp_select_widget(ids!(select_basic)).changed(&actions) {
+            self.ui.label(ids!(select_status)).set_text(cx, &format!("Selected: {}", val));
+        }
+        if let Some((_, val)) = self.ui.mp_select_widget(ids!(select_searchable)).changed(&actions) {
+            self.ui.label(ids!(select_search_status)).set_text(cx, &format!("Selected: {}", val));
+        }
+        if let Some((_, val)) = self.ui.mp_select_widget(ids!(select_clearable)).changed(&actions) {
+            self.ui.label(ids!(select_clear_status)).set_text(cx, &format!("Selected: {}", val));
+        }
+        if self.ui.mp_select_widget(ids!(select_clearable)).cleared(&actions) {
+            self.ui.label(ids!(select_clear_status)).set_text(cx, "Cleared!");
         }
 
         // Handle Tab clicks - Default style

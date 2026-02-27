@@ -31,6 +31,7 @@ makepad-components = { workspace = true, features = [
     "Popover",
     "Progress",
     "Radio",
+    "Select",
     "Skeleton",
     "Slider",
     "Spinner",

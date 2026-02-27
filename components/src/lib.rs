@@ -137,6 +137,10 @@ pub mod table;
 #[path ="./dock/dock.rs"]
 pub mod dock;
 
+#[cfg(feature = "Select")]
+#[path ="./select/select.rs"]
+pub mod select;
+
 #[cfg(feature = "Space")]
 #[path ="./space/space.rs"]
 pub mod space;
@@ -209,6 +213,8 @@ pub fn live_design(cx: &mut Cx) {
     text::live_design(cx);
     #[cfg(feature = "Tooltip")]
     tooltip::live_design(cx);
+    #[cfg(feature = "Select")]
+    select::live_design(cx);
     #[cfg(feature = "Space")]
     space::live_design(cx);
     #[cfg(feature = "Table")]
