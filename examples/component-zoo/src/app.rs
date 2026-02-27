@@ -1,3 +1,6 @@
+use makepad_components::editable_list::EditableListAction;
+use makepad_components::editable_list::EditableListEditAction;
+use makepad_components::editable_list::MpEditableListWidgetRefExt;
 use makepad_widgets::*;
 use makepad_components::avatar::MpAvatarWidgetRefExt;
 use makepad_components::badge::MpBadgeWidgetRefExt;
@@ -42,6 +45,7 @@ live_design! {
     use makepad_components::divider::*;
     use makepad_components::dropdown::*;
     use makepad_components::drawer::*;
+    use makepad_components::flexible_data_table::*;
     use makepad_components::input::*;
     use makepad_components::label::*;
     use makepad_components::layout::*;
@@ -66,6 +70,7 @@ live_design! {
     use makepad_components::table::*;
     use makepad_components::dock::*;
     use makepad_components::select::*;
+    use makepad_components::editable_list::*;
 
     // ============================================================
     // Section Header Component
@@ -150,7 +155,6 @@ live_design! {
                             theme_label = <SubsectionLabel> { text: "Light" }
                         }
                     }
-
                     // Category Tab Bar
                     <View> {
                         width: Fill, height: Fit,
@@ -2471,6 +2475,39 @@ live_design! {
 
                             <MpDivider> {}
 
+                            // ===== Editable List Section =====
+                            <View> {
+                                width: Fill, height: Fit,
+                                flow: Down,
+                                spacing: 16,
+
+                                <SectionHeader> { text: "Editable List" }
+
+                                <SubsectionLabel> {
+                                    text: "A generic list that can hold any widget type with closure-based population"
+                                }
+
+                                <View> {
+                                    width: Fill, height: Fit,
+                                    flow: Right,
+                                    spacing: 8,
+                                    align: { y: 0.5 }
+
+                                    add_item_btn = <MpButton> { text: "Add Item" }
+                                    clear_items_btn = <MpButtonOutline> { text: "Clear All" }
+                                    item_count_label = <Label> {
+                                        draw_text: {
+                                            text_style: <THEME_FONT_REGULAR>{ font_size: 14.0 }
+                                            color: (MUTED_FOREGROUND)
+                                        }
+                                        text: "Items: 0"
+                                    }
+                                }
+                                editable_list_demo = <MpEditableList>{}
+                            }
+
+                            <MpDivider> {}
+
                             <View> {
                                 width: Fill, height: Fit,
                                 flow: Down,
@@ -3634,7 +3671,7 @@ live_design! {
                             width: Fill, height: Fill,
                             flow: Down,
                             spacing: 24,
-                            padding: { left: 24, right: 24, top: 24, bottom: 100 }
+                            padding: { left: 24, right: 24, top: 24, bottom: 400 }
 
                             show_bg: true
                             draw_bg: { color: (MUTED) }
@@ -4474,6 +4511,22 @@ live_design! {
                                     }
                                 }
                             }
+
+                            <MpDivider> {}
+
+                            // ===== FlexibleDataTable Section =====
+                            <View> {
+                                width: Fill, height: Fit,
+                                flow: Down,
+                                spacing: 16,
+
+                                <SectionHeader> { text: "FlexibleDataTable" }
+
+                                <FlexibleDataTable> {
+                                    width: Fill,
+                                    height: Fit,
+                                }
+                            }
                         }
                     }
                     } // close main_content
@@ -4505,6 +4558,33 @@ live_design! {
                         }
                     }
                 } // close demo_modal
+
+                    // EditableList modal - must be at root level for overlay
+                    editable_list_modal = <MpModalWidget> {
+                        content = {
+                            dialog = <MpModal> {
+                                width: 400
+                                header = {
+                                    title = { text: "Configure Item" }
+                                }
+                                body = {
+                                    <Label> {
+                                        width: Fill
+                                        draw_text: {
+                                            text_style: <THEME_FONT_REGULAR>{ font_size: 14.0 }
+                                            color: (MUTED_FOREGROUND)
+                                            wrap: Word
+                                        }
+                                        text: "Configure or add a new item."
+                                    }
+                                }
+                                footer = {
+                                    editable_list_modal_cancel_btn = <MpButtonGhost> { text: "Cancel" }
+                                    editable_list_modal_save_btn = <MpButtonPrimary> { text: "Save" }
+                                }
+                            }
+                        }
+                    }
 
                     demo_drawer_right = <MpDrawerWidget> {
                         container = <MpDrawerContainerRight> {
@@ -4757,6 +4837,10 @@ pub struct App {
     menu_tree_settings_expanded: bool,
     #[rust]
     radius_demo_value: f64,
+    #[rust]
+    dynamic_list_count: usize,
+    #[rust]
+    editable_list_modal_index: Option<usize>,
 }
 
 impl LiveHook for App {
@@ -4812,6 +4896,13 @@ impl MatchEvent for App {
         self.ui.mp_select_widget(ids!(select_disabled)).set_labels(cx, fruit_labels);
         self.ui.mp_select_widget(ids!(select_disabled)).set_selected_index(cx, 0);
 
+        // Initialize dynamic list with some items
+        self.dynamic_list_count = 0;
+        for _ in 0..2 {
+            self.ui.mp_editable_list(ids!(editable_list_demo)).handle_edit_action(cx, &EditableListEditAction::Add(String::from("hello")), |cx, idx, widget, data| {
+                widget.label(ids!(item_label)).set_text(cx, &format!("{} {}", data, idx));
+            });
+        }
     }
 
     fn handle_actions(&mut self, cx: &mut Cx, actions: &Actions) {
@@ -4908,6 +4999,74 @@ impl MatchEvent for App {
         }
         if let Some(on) = self.ui.mp_switch(ids!(switch_notifications)).changed(&actions) {
             log!("Notifications: {}", if on { "ON" } else { "OFF" });
+        }
+
+        // Handle dynamic list buttons
+        if self.ui.mp_button(ids!(add_item_btn)).clicked(&actions) {
+            self.ui
+                .mp_editable_list(ids!(editable_list_demo))
+                .handle_edit_action(
+                    cx,
+                    &EditableListEditAction::Add(String::from("hello")),
+                    |cx, _idx, widget, data| {
+                        widget.label(ids!(item_label)).set_text(cx, data);
+                    },
+                );
+        }
+        if self.ui.mp_button(ids!(clear_items_btn)).clicked(&actions) {
+            self.ui.mp_editable_list(ids!(editable_list_demo)).list().clear(cx);
+        }
+
+        // Handle EditableListAction from editable_list_demo
+        for action in actions {
+            if let EditableListAction::Configure(idx) = action.as_widget_action().cast() {
+                // Open modal for configure (idx is Some) or add (idx is None)
+                self.editable_list_modal_index = idx;
+                self.ui.mp_modal_widget(ids!(editable_list_modal)).open(cx);
+            }
+        }
+
+        // Handle editable_list modal buttons
+        if self
+            .ui
+            .mp_button(ids!(editable_list_modal_cancel_btn))
+            .clicked(&actions)
+        {
+            self.ui.mp_modal_widget(ids!(editable_list_modal)).close(cx);
+        }
+        if self
+            .ui
+            .mp_button(ids!(editable_list_modal_save_btn))
+            .clicked(&actions)
+        {
+            if let Some(idx) = self.editable_list_modal_index {
+                // Configure mode - update existing item
+                self.ui
+                    .mp_editable_list(ids!(editable_list_demo))
+                    .handle_edit_action(
+                        cx,
+                        &EditableListEditAction::Configure(Some(idx), String::from("Updated")),
+                        |cx, idx, widget, data| {
+                            widget
+                                .label(ids!(item_label))
+                                .set_text(cx, &format!("{} {}", data, idx));
+                        },
+                    );
+            } else {
+                // Add mode - create new item
+                self.ui
+                    .mp_editable_list(ids!(editable_list_demo))
+                    .handle_edit_action(
+                        cx,
+                        &EditableListEditAction::Add(String::from("New Item")),
+                        |cx, idx, widget, data| {
+                            widget
+                                .label(ids!(item_label))
+                                .set_text(cx, &format!("{} {}", data, idx));
+                        },
+                    );
+            }
+            self.ui.mp_modal_widget(ids!(editable_list_modal)).close(cx);
         }
 
         // Handle radio changes (mutually exclusive)

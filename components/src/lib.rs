@@ -49,9 +49,17 @@ pub mod divider;
 #[path ="./dropdown/dropdown.rs"]
 pub mod dropdown;
 
+#[cfg(feature = "FlexibleDataTable")]
+#[path ="./flexible_data_table/flexible_data_table.rs"]
+pub mod flexible_data_table;
+
 #[cfg(feature = "Drawer")]
 #[path ="./drawer/drawer.rs"]
 pub mod drawer;
+
+#[cfg(feature = "EditableList")]
+#[path ="./editable_list/editable_list.rs"]
+pub mod editable_list;
 
 #[cfg(feature = "Input")]
 #[path ="./input/input.rs"]
@@ -175,6 +183,10 @@ pub fn live_design(cx: &mut Cx) {
     dropdown::live_design(cx);
     #[cfg(feature = "Drawer")]
     drawer::live_design(cx);
+    #[cfg(feature = "FlexibleDataTable")]
+    flexible_data_table::live_design(cx);
+    #[cfg(feature = "EditableList")]
+    editable_list::live_design(cx);
     #[cfg(feature = "Input")]
     input::live_design(cx);
     #[cfg(feature = "Label")]
